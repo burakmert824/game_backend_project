@@ -1,28 +1,27 @@
 package com.dreamgames.backendengineeringcasestudy.entity;
 
-
+import com.dreamgames.backendengineeringcasestudy.controller.exception.InsufficientCoinsException;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-
 @Entity
 @Table(name = "users")
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String username;
-    private int level = 1;
-    private int coins = 5000;
+    private int level;
+    private int coins;
     private String country;
-    
 
-    public User() {
-    }
+    // Constructors
+    public User() {}
 
     public User(String username, int level, int coins, String country) {
         this.username = username;
