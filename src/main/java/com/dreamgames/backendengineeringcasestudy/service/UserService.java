@@ -32,4 +32,8 @@ public class UserService {
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
+
+    public List<User> findUsersByCountry(String country) {
+        return userRepository.findByCountry(country);
+    }
 }
