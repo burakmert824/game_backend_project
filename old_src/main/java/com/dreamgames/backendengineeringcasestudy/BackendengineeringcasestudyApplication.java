@@ -1,13 +1,13 @@
-package com.example.gamebackend;
+package com.dreamgames.backendengineeringcasestudy;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class GamebackendApplication {
+public class BackendengineeringcasestudyApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(GamebackendApplication.class, args);
+		SpringApplication.run(BackendengineeringcasestudyApplication.class, args);
 	}
 
 }

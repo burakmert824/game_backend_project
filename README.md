@@ -1,2 +1,3 @@
-# game_backend_project
-Backend service for a a mock game scenerio
+# Backend Engineering Case Study
+
+Add brief explanation of how you organized your implementation and the choices you made in terms of design while solving problems
