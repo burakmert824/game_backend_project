@@ -17,10 +17,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<ApiResponse<Object>> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
+        ApiResponse<Object> response = new ApiResponse<>(ex.getMessage(), null);
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<ApiResponse<Object>> handleException(Exception ex) {
-        ApiResponse<Object> response = new ApiResponse<>("An error occurred", null);
+        //ApiResponse<Object> response = new ApiResponse<>("An error occurred", null);
+        ApiResponse<Object> response = new ApiResponse<>(ex.getMessage(), null);
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

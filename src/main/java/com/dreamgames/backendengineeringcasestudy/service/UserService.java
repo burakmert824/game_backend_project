@@ -36,4 +36,9 @@ public class UserService {
     public List<User> findUsersByCountry(String country) {
         return userRepository.findByCountry(country);
     }
+
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+    
 }
