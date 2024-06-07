@@ -139,7 +139,7 @@ public class UserController {
                 tournamentService.updateUserTournamentScore(userTournament, 1); // Example: add 100 points
             }
         }
-
+        
         ApiResponse<User> response = new ApiResponse<>("User level incremented successfully", updatedUser);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
