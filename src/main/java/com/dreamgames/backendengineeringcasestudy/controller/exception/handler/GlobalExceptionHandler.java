@@ -1,12 +1,6 @@
-package com.dreamgames.backendengineeringcasestudy.controller.exception.GlobalExceptionHandler;
+package com.dreamgames.backendengineeringcasestudy.controller.exception.handler;
 
-import com.dreamgames.backendengineeringcasestudy.controller.exception.AlreadyInTournamentException;
-import com.dreamgames.backendengineeringcasestudy.controller.exception.InsufficientCoinsException;
-import com.dreamgames.backendengineeringcasestudy.controller.exception.NoTournamentAtThisHourException;
-import com.dreamgames.backendengineeringcasestudy.controller.exception.ResourceNotFoundException;
-import com.dreamgames.backendengineeringcasestudy.controller.exception.UnclaimedTournamentException;
-import com.dreamgames.backendengineeringcasestudy.controller.exception.UserAlreadyExistsException;
-import com.dreamgames.backendengineeringcasestudy.controller.exception.UserNotEligibleException;
+import com.dreamgames.backendengineeringcasestudy.controller.exception.*;
 import com.dreamgames.backendengineeringcasestudy.controller.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -62,6 +56,27 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoTournamentAtThisHourException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ApiResponse<Object>> handleNoTournamentAtThisHourException(NoTournamentAtThisHourException ex) {
+        ApiResponse<Object> response = new ApiResponse<>(ex.getMessage(), null);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(PrizeAlreadyClaimedException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ApiResponse<Object>> handlePrizeAlreadyClaimedException(PrizeAlreadyClaimedException ex) {
+        ApiResponse<Object> response = new ApiResponse<>(ex.getMessage(), null);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(NotEnoughCompetitorsException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ApiResponse<Object>> handleNotEnoughCompetitorsException(NotEnoughCompetitorsException ex) {
+        ApiResponse<Object> response = new ApiResponse<>(ex.getMessage(), null);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(TournamentNotEndedException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ApiResponse<Object>> handleTournamentNotEndedException(TournamentNotEndedException ex) {
         ApiResponse<Object> response = new ApiResponse<>(ex.getMessage(), null);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }

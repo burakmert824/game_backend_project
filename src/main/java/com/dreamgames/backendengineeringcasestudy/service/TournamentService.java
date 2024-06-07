@@ -3,6 +3,10 @@ package com.dreamgames.backendengineeringcasestudy.service;
 import com.dreamgames.backendengineeringcasestudy.entity.Tournament;
 import com.dreamgames.backendengineeringcasestudy.entity.User;
 import com.dreamgames.backendengineeringcasestudy.entity.UserTournament;
+import com.dreamgames.backendengineeringcasestudy.controller.exception.NotEnoughCompetitorsException;
+import com.dreamgames.backendengineeringcasestudy.controller.exception.PrizeAlreadyClaimedException;
+import com.dreamgames.backendengineeringcasestudy.controller.exception.ResourceNotFoundException;
+import com.dreamgames.backendengineeringcasestudy.controller.exception.TournamentNotEndedException;
 import com.dreamgames.backendengineeringcasestudy.dto.TournamentCompetitorScoreDTO;
 import com.dreamgames.backendengineeringcasestudy.repository.TournamentRepository;
 import com.dreamgames.backendengineeringcasestudy.repository.UserRepository;
@@ -10,6 +14,8 @@ import com.dreamgames.backendengineeringcasestudy.repository.UserTournamentRepos
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 
 
 import java.time.LocalDate;
@@ -83,6 +89,25 @@ public class TournamentService {
 
     public boolean hasUnclaimedTournaments(Long userId) {
         return userTournamentRepository.hasUnclaimedTournaments(userId);
+    }
+
+    public UserTournament getUserTournament(Long userId, Long tournamentId) {
+        return userTournamentRepository.findByUserIdAndTournamentId(userId, tournamentId).orElse(null);
+    }
+    
+    @Transactional
+    public void claimTournamentPrize(Long userId, Long tournamentId, int prize) {
+        UserTournament userTournament = userTournamentRepository.findByUserIdAndTournamentId(userId, tournamentId).orElse(null);
+        if (userTournament == null) {
+            throw new ResourceNotFoundException("User is not part of this tournament.");
+        }
+
+        User user = userTournament.getUser();
+        user.setCoins(user.getCoins() + prize);
+        userRepository.save(user);
+
+        userTournament.setClaimed(true);
+        userTournamentRepository.save(userTournament);
     }
 
 }

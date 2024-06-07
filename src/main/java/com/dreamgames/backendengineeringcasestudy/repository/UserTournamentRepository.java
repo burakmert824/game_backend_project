@@ -9,8 +9,10 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.jpa.repository.Query;
-import java.time.LocalDate;
+import java.util.Optional;
 
+
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -35,5 +37,11 @@ public interface UserTournamentRepository extends JpaRepository<UserTournament, 
 
     @Query("SELECT ut FROM UserTournament ut WHERE ut.user.id = :userId AND ut.tournament.date = :date AND ut.tournament.isStarted = true")
     UserTournament findActiveTournamentParticipation(Long userId, LocalDate date);
+
+    
+    @Query("SELECT COUNT(ut) > 0 FROM UserTournament ut WHERE ut.user.id = :userId AND ut.isClaimed = false")
+    boolean hasUnclaimedTournaments(Long userId);
+
+    Optional<UserTournament> findByUserIdAndTournamentId(Long userId, Long tournamentId);
 
 }
