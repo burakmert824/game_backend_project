@@ -1,8 +1,5 @@
 # Backend Engineering Case Study
 
-Add a brief explanation of how you organized your implementation and the choices you made in terms of design while solving problems
-
-
 This project is designed to demonstrate a backend implementation for a game backend application using Spring Boot and MySQL. The application allows users to participate in tournaments, track their progress, and claim prizes based on their performance. The project includes RESTful APIs for managing users, tournaments, and their interactions.
 
 Structure:
