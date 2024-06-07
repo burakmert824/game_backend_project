@@ -1,6 +1,26 @@
-CREATE TABLE if not exists example_table (
-    id INT PRIMARY KEY,
-    name VARCHAR(255)
-);
+CREATE DATABASE IF NOT EXISTS `mysql-db`;
+USE `mysql-db`;
 
-INSERT INTO `example_table` (`id`, `name`) VALUES (1, 'example-1'), (2, 'example-2');
+CREATE TABLE IF NOT EXISTS users (
+     id BIGINT AUTO_INCREMENT PRIMARY KEY, 
+     username VARCHAR(255) NOT NULL,  
+     level INT DEFAULT 1, 
+     coins INT DEFAULT 5000, 
+     country VARCHAR(255) NOT NULL );
+
+CREATE TABLE IF NOT EXISTS tournaments (
+     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+     is_started BOOLEAN DEFAULT FALSE,
+     date DATE NOT NULL );
+
+
+CREATE TABLE IF NOT EXISTS user_tournament (    
+ user_id BIGINT NOT NULL, 
+    tournament_id BIGINT NOT NULL,
+    is_claimed BOOLEAN DEFAULT FALSE,
+    score INT DEFAULT 0,
+    PRIMARY KEY (user_id, tournament_id), 
+    FOREIGN KEY (user_id) REFERENCES users(id), 
+    FOREIGN KEY (tournament_id) REFERENCES tournaments(id) );
+
+

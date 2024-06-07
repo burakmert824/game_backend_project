@@ -9,13 +9,18 @@ import com.dreamgames.backendengineeringcasestudy.repository.TournamentRepositor
 import com.dreamgames.backendengineeringcasestudy.repository.UserRepository;
 import com.dreamgames.backendengineeringcasestudy.repository.UserTournamentRepository;
 import com.dreamgames.backendengineeringcasestudy.dto.CountryLeaderboardDTO;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.LocalTime;
-import java.util.List;
 
 @Service
 public class TournamentService {
@@ -141,6 +146,27 @@ public class TournamentService {
 
         userTournament.setClaimed(true);
         userTournamentRepository.save(userTournament);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CountryLeaderboardDTO> getCountryLeaderboardByDate(LocalDate date) {
+        List<Tournament> tournaments = tournamentRepository.findByDate(date);
+        Map<String, Long> countryScores = new HashMap<>();
+
+        for (Tournament tournament : tournaments) {
+            List<CountryLeaderboardDTO> leaderboard = userTournamentRepository.findCountryLeaderboardByTournamentId(tournament.getId());
+            for (CountryLeaderboardDTO entry : leaderboard) {
+                countryScores.put(entry.getCountry(), countryScores.getOrDefault(entry.getCountry(), 0L) + entry.getTotalScore());
+            }
+        }
+
+        List<CountryLeaderboardDTO> combinedLeaderboard = new ArrayList<>();
+        for (Map.Entry<String, Long> entry : countryScores.entrySet()) {
+            combinedLeaderboard.add(new CountryLeaderboardDTO(entry.getKey(), entry.getValue()));
+        }
+
+        combinedLeaderboard.sort((a, b) -> (int) (b.getTotalScore() - a.getTotalScore()));
+        return combinedLeaderboard;
     }
 
     @Transactional(readOnly = true)

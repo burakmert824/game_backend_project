@@ -15,4 +15,7 @@ public interface TournamentRepository extends JpaRepository<Tournament, Long> {
            "(SELECT ut.tournament.id FROM UserTournament ut JOIN ut.user u WHERE u.country = ?1) " +
            "AND t.date = ?2")
     List<Tournament> findEligibleTournaments(String country, LocalDate date);
+
+    List<Tournament> findByDate(LocalDate date);
+
 }

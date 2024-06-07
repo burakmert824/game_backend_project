@@ -45,11 +45,10 @@
         <scope>runtime</scope>
     </dependency>
 
-	   <!-- Mockito Core -->
-    <dependency>
+	<dependency>
         <groupId>org.mockito</groupId>
-        <artifactId>mockito-core</artifactId>
-        <scope>test</scope>
+        <artifactId>mockito-inline</artifactId>
+        <version>4.4.0</version>
     </dependency>
 
     <!-- Hamcrest (for better assertions) -->
