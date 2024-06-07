@@ -49,22 +49,31 @@ public class TournamentService {
 
     @Transactional
     public List<TournamentCompetitorScoreDTO> addUserToTournament(User user, Tournament tournament) {
-        // Deduct 1000 coins from the user
-        user.setCoins(user.getCoins() - 1000);
-        userRepository.save(user);
-
-        UserTournament userTournament = new UserTournament(user, tournament, false, 0);
-        userTournamentRepository.save(userTournament);
 
         List<TournamentCompetitorScoreDTO> competitors = getCompetitorsByTournamentId(tournament.getId());
+    
+        // Create and save UserTournament entry
+        UserTournament userTournament = new UserTournament(user, tournament, false, 0);
+        userTournamentRepository.save(userTournament);
+    
+        // Deduct coins from the user and save
+        user.setCoins(user.getCoins() - 1000);
+        userRepository.save(user);
+    
+        // Add the new competitor to the list
+        TournamentCompetitorScoreDTO newCompetitor = new TournamentCompetitorScoreDTO(user.getId(), user.getUsername(), user.getCountry(), userTournament.getScore());
+        competitors.add(newCompetitor);
+    
+        // If this is the 5th competitor, mark the tournament as started and save
         if (competitors.size() == 5) {
             tournament.setIsStarted(true);
             tournamentRepository.save(tournament);
         }
-
-        return getCompetitorsByTournamentId(tournament.getId());
+    
+        return competitors;
     }
 
+    
     public boolean isUserParticipating(User user, LocalDate currentDate) {
         return userTournamentRepository.existsByUserIdAndTournamentDate(user.getId(), currentDate);
     }

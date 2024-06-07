@@ -13,6 +13,9 @@ public class TournamentCompetitorScoreDTO {
         this.country = country;
         this.score = score;
     }
+    
+    public TournamentCompetitorScoreDTO() {
+    }
 
     // Getters and setters
     public Long getUserId() {

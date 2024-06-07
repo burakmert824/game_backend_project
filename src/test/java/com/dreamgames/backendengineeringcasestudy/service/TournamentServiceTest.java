@@ -1,11 +1,17 @@
 package com.dreamgames.backendengineeringcasestudy.service;
 
+import com.dreamgames.backendengineeringcasestudy.dto.TournamentCompetitorScoreDTO;
 import com.dreamgames.backendengineeringcasestudy.entity.Tournament;
 import com.dreamgames.backendengineeringcasestudy.entity.User;
 import com.dreamgames.backendengineeringcasestudy.entity.UserTournament;
 import com.dreamgames.backendengineeringcasestudy.repository.TournamentRepository;
 import com.dreamgames.backendengineeringcasestudy.repository.UserTournamentRepository;
 import com.dreamgames.backendengineeringcasestudy.repository.UserRepository;
+
+
+
+import java.util.ArrayList;
+import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -95,11 +101,23 @@ public class TournamentServiceTest {
 
         UserTournament userTournament = new UserTournament(user, tournament, false, 0);
 
+        TournamentCompetitorScoreDTO competitor = new TournamentCompetitorScoreDTO();
+        competitor.setUserId(1L);
+        competitor.setUsername("testuser");
+        competitor.setCountry("Turkey");
+        competitor.setScore(100);
+
+        List<TournamentCompetitorScoreDTO> competitors = new ArrayList<>(Collections.singletonList(competitor));
+
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(userTournamentRepository.save(any(UserTournament.class))).thenReturn(userTournament);
-        when(userTournamentRepository.countByTournamentId(1L)).thenReturn(4);
+        when(userTournamentRepository.findCompetitorsByTournamentIdOrderByScoreDesc(1L)).thenReturn(competitors);
 
-        tournamentService.addUserToTournament(user, tournament);
+        // Simulate adding the 4th user
+        competitors = new ArrayList<>(Collections.nCopies(3, competitor));
+        when(userTournamentRepository.findCompetitorsByTournamentIdOrderByScoreDesc(1L)).thenReturn(competitors);
+
+        List<TournamentCompetitorScoreDTO> leaderboard = tournamentService.addUserToTournament(user, tournament);
 
         // Verify that the user's coins have been deducted
         assertThat(user.getCoins()).isEqualTo(4000);
@@ -108,16 +126,23 @@ public class TournamentServiceTest {
         verify(userRepository, times(1)).save(user);
         verify(userTournamentRepository, times(1)).save(any(UserTournament.class));
 
-        // Verify that the tournament's isStarted field has not been set to true
+        // Verify that the tournament's isStarted field has not been set to true yet
         assertThat(tournament.getIsStarted()).isFalse();
 
-        // Now simulate adding the 5th user
-        when(userTournamentRepository.countByTournamentId(1L)).thenReturn(5);
+        // Verify that the leaderboard includes the added user
+        assertThat(leaderboard.size()).isEqualTo(4);
 
-        tournamentService.addUserToTournament(user, tournament);
+        // Now simulate adding the 5th user
+        competitors = new ArrayList<>(Collections.nCopies(4, competitor));
+        when(userTournamentRepository.findCompetitorsByTournamentIdOrderByScoreDesc(1L)).thenReturn(competitors);
+
+        leaderboard = tournamentService.addUserToTournament(user, tournament);
 
         // Verify that the tournament's isStarted field has been set to true
         assertThat(tournament.getIsStarted()).isTrue();
         verify(tournamentRepository, times(1)).save(tournament);
+
+        // Verify that the leaderboard includes the added user
+        assertThat(leaderboard.size()).isEqualTo(5);
     }
 }

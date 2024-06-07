@@ -17,7 +17,7 @@ public class Tournament {
     private Long id;
 
     @Column(name = "is_started")
-    private Boolean isStarted;
+    private Boolean isStarted = false;
 
     @Column(name = "date")
     private LocalDate date;
