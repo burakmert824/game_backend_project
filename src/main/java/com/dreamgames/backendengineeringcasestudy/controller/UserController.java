@@ -8,6 +8,7 @@ import com.dreamgames.backendengineeringcasestudy.controller.exception.NoTournam
 import com.dreamgames.backendengineeringcasestudy.controller.exception.ResourceNotFoundException;
 import com.dreamgames.backendengineeringcasestudy.entity.Tournament;
 import com.dreamgames.backendengineeringcasestudy.entity.User;
+import com.dreamgames.backendengineeringcasestudy.entity.UserTournament;
 import com.dreamgames.backendengineeringcasestudy.service.TournamentService;
 import com.dreamgames.backendengineeringcasestudy.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,11 +100,15 @@ public class UserController {
      * - Retrieves the user by ID.
      * - Increases the user's level by one.
      * - Adds 25 coins to the user's current coins.
-     * - Saves the updated user.
+     * - Checks if the user is participating in any tournaments today that have started.
+     * - If participating, checks if the current time is within tournament hours (00:00 to 20:00 UTC).
+     * - If within hours, updates the tournament score by adding a specified amount.
+     * - Saves the updated user and user-tournament.
      * 
      * Responses:
      * - 200 OK: User level incremented successfully.
      * - 404 Not Found: User not found.
+     * - 400 Bad Request: Tournament not within hours.
      * - 500 Internal Server Error: Other errors.
      * 
      * Example:
@@ -119,9 +124,22 @@ public class UserController {
         if (user == null) {
             throw new ResourceNotFoundException("User not found with id: " + id);
         }
+
         user.setLevel(user.getLevel() + 1);
         user.setCoins(user.getCoins() + 25);
         User updatedUser = userService.updateUser(user);
+
+        // Check if the user is participating in any tournaments today that have started
+        LocalDate currentDate = LocalDate.now(ZoneOffset.UTC);
+        UserTournament userTournament = tournamentService.getActiveTournamentParticipation(user.getId(), currentDate);
+        LocalTime currentTime = LocalTime.now(ZoneOffset.UTC);
+        if (userTournament != null) {
+            // Check if the current time is within tournament hours
+            if (currentTime.isBefore(LocalTime.of(20, 0))) {
+                tournamentService.updateUserTournamentScore(userTournament, 1); // Example: add 100 points
+            }
+        }
+
         ApiResponse<User> response = new ApiResponse<>("User level incremented successfully", updatedUser);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

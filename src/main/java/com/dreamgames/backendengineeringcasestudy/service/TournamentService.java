@@ -71,4 +71,15 @@ public class TournamentService {
     }
 
 
+    public UserTournament getActiveTournamentParticipation(Long userId, LocalDate date) {
+        return userTournamentRepository.findActiveTournamentParticipation(userId, date);
+    }
+
+    @Transactional
+    public void updateUserTournamentScore(UserTournament userTournament, int additionalScore) {
+        userTournament.setScore(userTournament.getScore() + additionalScore);
+        userTournamentRepository.save(userTournament);
+    }
+
+    
 }

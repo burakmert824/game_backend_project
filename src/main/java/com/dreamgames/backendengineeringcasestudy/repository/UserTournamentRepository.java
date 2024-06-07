@@ -33,4 +33,7 @@ public interface UserTournamentRepository extends JpaRepository<UserTournament, 
            "ORDER BY ut.score DESC")
     List<TournamentCompetitorScoreDTO> findCompetitorsByTournamentIdOrderByScoreDesc(Long tournamentId);
 
+    @Query("SELECT ut FROM UserTournament ut WHERE ut.user.id = :userId AND ut.tournament.date = :date AND ut.tournament.isStarted = true")
+    UserTournament findActiveTournamentParticipation(Long userId, LocalDate date);
+
 }
