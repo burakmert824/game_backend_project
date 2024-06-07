@@ -11,10 +11,9 @@ import com.dreamgames.backendengineeringcasestudy.repository.UserTournamentRepos
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-
-
 import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -84,7 +83,33 @@ public class TournamentService {
     }
 
     public boolean hasUnclaimedTournaments(Long userId) {
-        return userTournamentRepository.hasUnclaimedTournaments(userId);
+        List<UserTournament> unclaimedTournaments = userTournamentRepository.findUnclaimedTournamentsByUserId(userId);
+        LocalDate currentDate = LocalDate.now(ZoneOffset.UTC);
+        LocalTime currentTime = LocalTime.now(ZoneOffset.UTC);
+
+        for (UserTournament userTournament : unclaimedTournaments) {
+            if (
+                !userTournament.getTournament().getDate().equals(currentDate) || currentTime.isAfter(LocalTime.of(20, 0)) && userTournament.getTournament().getDate().equals(currentDate) ) {
+                List<TournamentCompetitorScoreDTO> competitors = getCompetitorsByTournamentId(userTournament.getTournament().getId());
+                int rank = -1;
+                for (int i = 0; i < competitors.size(); i++) {
+                    if (competitors.get(i).getUserId().equals(userId)) {
+                        rank = i + 1; // Rank is 1-based
+                        break;
+                    }
+                }
+                if (rank > 2) {
+                    userTournament.setClaimed(true);
+                    userTournamentRepository.save(userTournament);
+                } else {
+                    return true;
+                }
+            } 
+            else {
+                return true;
+            }
+        }
+        return false;
     }
 
     public UserTournament getUserTournament(Long userId, Long tournamentId) {

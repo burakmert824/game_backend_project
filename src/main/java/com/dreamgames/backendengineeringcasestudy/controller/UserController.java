@@ -217,8 +217,7 @@ public class UserController {
 
         // Get the current date
         LocalDate currentDate = LocalDate.now(ZoneOffset.UTC);
-        
-        //todo: this can be deleted because this tournament will be shown in the unclaimed tournament list
+
         // Check if the user is already participating in a tournament on the current date
         if (tournamentService.isUserParticipating(user, currentDate)) {
             throw new AlreadyInTournamentException("User is already participating in a tournament on this date.");
@@ -237,7 +236,7 @@ public class UserController {
     }
 
 
-         /**
+    /**
      * Claim tournament prize.
      * 
      * Endpoint: POST /users/{userId}/tournaments/{tournamentId}/claim-prize

@@ -44,4 +44,7 @@ public interface UserTournamentRepository extends JpaRepository<UserTournament, 
 
     Optional<UserTournament> findByUserIdAndTournamentId(Long userId, Long tournamentId);
 
+    @Query("SELECT ut FROM UserTournament ut WHERE ut.user.id = ?1 AND ut.isClaimed = false")
+    List<UserTournament> findUnclaimedTournamentsByUserId(Long userId);
+
 }
