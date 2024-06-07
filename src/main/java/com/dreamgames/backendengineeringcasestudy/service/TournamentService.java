@@ -3,10 +3,7 @@ package com.dreamgames.backendengineeringcasestudy.service;
 import com.dreamgames.backendengineeringcasestudy.entity.Tournament;
 import com.dreamgames.backendengineeringcasestudy.entity.User;
 import com.dreamgames.backendengineeringcasestudy.entity.UserTournament;
-import com.dreamgames.backendengineeringcasestudy.controller.exception.NotEnoughCompetitorsException;
-import com.dreamgames.backendengineeringcasestudy.controller.exception.PrizeAlreadyClaimedException;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.ResourceNotFoundException;
-import com.dreamgames.backendengineeringcasestudy.controller.exception.TournamentNotEndedException;
 import com.dreamgames.backendengineeringcasestudy.dto.TournamentCompetitorScoreDTO;
 import com.dreamgames.backendengineeringcasestudy.repository.TournamentRepository;
 import com.dreamgames.backendengineeringcasestudy.repository.UserRepository;
@@ -14,8 +11,7 @@ import com.dreamgames.backendengineeringcasestudy.repository.UserTournamentRepos
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
+
 
 
 import java.time.LocalDate;

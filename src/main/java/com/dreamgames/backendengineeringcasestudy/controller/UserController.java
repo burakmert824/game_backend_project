@@ -2,10 +2,14 @@ package com.dreamgames.backendengineeringcasestudy.controller;
 
 
 import com.dreamgames.backendengineeringcasestudy.controller.response.ApiResponse;
+import com.dreamgames.backendengineeringcasestudy.dto.TournamentCompetitorScoreDTO;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.AlreadyInTournamentException;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.InsufficientCoinsException;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.NoTournamentAtThisHourException;
+import com.dreamgames.backendengineeringcasestudy.controller.exception.NotEnoughCompetitorsException;
+import com.dreamgames.backendengineeringcasestudy.controller.exception.PrizeAlreadyClaimedException;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.ResourceNotFoundException;
+import com.dreamgames.backendengineeringcasestudy.controller.exception.TournamentNotEndedException;
 import com.dreamgames.backendengineeringcasestudy.entity.Tournament;
 import com.dreamgames.backendengineeringcasestudy.entity.User;
 import com.dreamgames.backendengineeringcasestudy.entity.UserTournament;
@@ -229,6 +233,81 @@ public class UserController {
 
         tournamentService.addUserToTournament(user, tournament);
         ApiResponse<Tournament> response = new ApiResponse<>("User entered the tournament successfully", tournament);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+         /**
+     * Claim tournament prize.
+     * 
+     * Endpoint: POST /users/{userId}/tournaments/{tournamentId}/claim-prize
+     * 
+     * Actions:
+     * - Checks if the tournament has at least 5 competitors.
+     * - Checks the user's rank in the tournament.
+     * - If the rank is 1st or 2nd, adds the prize to the user's coins.
+     * - Marks the tournament as claimed.
+     * 
+     * Responses:
+     * - 200 OK: Tournament prize claimed successfully.
+     * - 404 Not Found: User or tournament not found.
+     * - 400 Bad Request: Not enough competitors, prize already claimed, or tournament not ended.
+     * 
+     * @param userId The ID of the user claiming the prize.
+     * @param tournamentId The ID of the tournament.
+     * @return ResponseEntity with the ApiResponse containing the result or an error message.
+     * @throws ResourceNotFoundException if the user or tournament is not found.
+     */
+    @PostMapping("/{userId}/tournaments/{tournamentId}/claim-prize")
+    public ResponseEntity<ApiResponse<String>> claimTournamentPrize(@PathVariable Long userId, @PathVariable Long tournamentId) {
+        User user = userService.getUserById(userId);
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found with id: " + userId);
+        }
+
+        UserTournament userTournament = tournamentService.getUserTournament(userId, tournamentId);
+        if (userTournament == null) {
+            throw new ResourceNotFoundException("User is not part of this tournament.");
+        }
+
+        if (userTournament.isClaimed()) {
+            throw new PrizeAlreadyClaimedException("Prize already claimed for this tournament.");
+        }
+
+        List<TournamentCompetitorScoreDTO> competitors = tournamentService.getCompetitorsByTournamentId(tournamentId);
+        if (competitors.size() < 5) {
+            throw new NotEnoughCompetitorsException("Not enough competitors in the tournament.");
+        }
+
+        LocalDate currentDate = LocalDate.now(ZoneOffset.UTC);
+        LocalTime currentTime = LocalTime.now(ZoneOffset.UTC);
+        Tournament tournament = userTournament.getTournament();
+        if (tournament.getDate().equals(currentDate) && currentTime.isBefore(LocalTime.of(20, 0))) {
+            throw new TournamentNotEndedException("Tournament has not ended yet.");
+        }
+
+        int rank = -1;
+        for (int i = 0; i < competitors.size(); i++) {
+            if (competitors.get(i).getUserId().equals(userId)) {
+                rank = i + 1; // Rank is 1-based
+                break;
+            }
+        }
+
+        if (rank == -1) {
+            throw new ResourceNotFoundException("User rank not found in the tournament.");
+        }
+
+        int prize = 0;
+        if (rank == 1) {
+            prize = 10000;
+        } else if (rank == 2) {
+            prize = 5000;
+        }
+
+        tournamentService.claimTournamentPrize(userId, tournamentId, prize);
+
+        ApiResponse<String> response = new ApiResponse<>("Tournament prize claimed successfully", null);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
