@@ -48,7 +48,7 @@ public class TournamentService {
     }
 
     @Transactional
-    public void addUserToTournament(User user, Tournament tournament) {
+    public List<TournamentCompetitorScoreDTO> addUserToTournament(User user, Tournament tournament) {
         // Deduct 1000 coins from the user
         user.setCoins(user.getCoins() - 1000);
         userRepository.save(user);
@@ -56,11 +56,13 @@ public class TournamentService {
         UserTournament userTournament = new UserTournament(user, tournament, false, 0);
         userTournamentRepository.save(userTournament);
 
-        int competitorCount = userTournamentRepository.countByTournamentId(tournament.getId());
-        if (competitorCount == 5) {
+        List<TournamentCompetitorScoreDTO> competitors = getCompetitorsByTournamentId(tournament.getId());
+        if (competitors.size() == 5) {
             tournament.setIsStarted(true);
             tournamentRepository.save(tournament);
         }
+
+        return getCompetitorsByTournamentId(tournament.getId());
     }
 
     public boolean isUserParticipating(User user, LocalDate currentDate) {

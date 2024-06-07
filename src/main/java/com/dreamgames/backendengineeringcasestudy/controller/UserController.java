@@ -155,41 +155,43 @@ public class UserController {
      * Endpoint: POST /users/{id}/enter-tournament
      * 
      * Actions:
-     * - Checks if the user has more than 1000 coins and 20 level.
-     * - Finds a tournament that:
-     *   - Has no competitors from the user's country.
-     *   - Has less than 5 competitors.
-     * - Deducts 1000 coins from the user.
-     * - Enters the user into the tournament.
-     * - If the user is the 5th competitor, sets the tournament's isStarted field to true.
-     * - Checks if the current time is between 00:00 and 20:00 UTC. 
-     *   If not, throws NoTournamentAtThisHourException.
-     * - Checks if the user is already participating in a tournament on the current date. 
-     *   If yes, throws AlreadyInTournamentException.
-     * - Checks if the user has any unclaimed tournaments. 
-     *   If yes, throws UnclaimedTournamentException.
+     * - Retrieves the user by ID.
+     * - Checks if the user has at least 1000 coins and is at level 20 or higher.
+     * - Checks if the user has any unclaimed tournaments.
+     * - Checks if the current time is between 00:00 and 20:00 UTC.
+     * - Checks if the user is already participating in a tournament on the current date.
+     * - Finds an eligible tournament:
+     *   - No competitors from the user's country.
+     *   - Less than 5 competitors.
      * - If no eligible tournament is found, creates a new tournament.
+     * - Deducts 1000 coins from the user.
+     * - Adds the user to the tournament.
+     * - If the user is the 5th competitor, sets the tournament's isStarted field to true.
+     * - Returns the current tournament leaderboard.
      * 
      * Responses:
      * - 200 OK: User entered the tournament successfully.
      * - 404 Not Found: User not found or no eligible tournament found.
      * - 400 Bad Request: User not eligible to enter the tournament.
      * - 400 Bad Request: User does not have enough coins.
-     * - 400 Bad Request: No tournament at this hour.
-     * - 400 Bad Request: User already in a tournament on this date.
+     * - 400 Bad Request: No tournament available at this hour.
+     * - 400 Bad Request: User already participating in a tournament on this date.
      * - 400 Bad Request: User has unclaimed tournaments.
      * 
+     * Example:
+     * curl -X POST "http://localhost:8080/users/1/enter-tournament"
+     * 
      * @param id The ID of the user who wants to enter the tournament.
-     * @return ResponseEntity with the ApiResponse containing the tournament details or an error message.
+     * @return ResponseEntity with the ApiResponse containing the leaderboard or an error message.
      * @throws ResourceNotFoundException if the user or tournament is not found.
-     * @throws UserNotEligibleException if the user is not eligible to enter the tournament.
-     * @throws InsufficientCoinsException if the user does not have enough coins.
+     * @throws UserNotEligibleException if the user does not have enough levels to enter the tournament.
+     * @throws InsufficientCoinsException if the user does not have enough coins to enter the tournament.
      * @throws NoTournamentAtThisHourException if the current time is not between 00:00 and 20:00 UTC.
      * @throws AlreadyInTournamentException if the user is already participating in a tournament on the current date.
      * @throws UnclaimedTournamentException if the user has unclaimed tournaments.
      */
     @PostMapping("/{id}/enter-tournament")
-    public ResponseEntity<ApiResponse<Tournament>> enterTournament(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<List<TournamentCompetitorScoreDTO>>> enterTournament(@PathVariable Long id) {
         User user = userService.getUserById(id);
         if (user == null) {
             throw new ResourceNotFoundException("User not found with id: " + id);
@@ -230,11 +232,12 @@ public class UserController {
             tournament = tournamentService.createTournament(currentDate);
         }
 
-        tournamentService.addUserToTournament(user, tournament);
-        ApiResponse<Tournament> response = new ApiResponse<>("User entered the tournament successfully", tournament);
+        List<TournamentCompetitorScoreDTO> leaderboard = tournamentService.addUserToTournament(user, tournament);
+
+        // Prepare the response
+        ApiResponse<List<TournamentCompetitorScoreDTO>> response = new ApiResponse<>("User entered the tournament successfully", leaderboard);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-
 
     /**
      * Claim tournament prize.
