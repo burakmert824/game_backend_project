@@ -8,6 +8,10 @@ public class CountryLeaderboardDTO {
         this.country = country;
         this.totalScore = totalScore;
     }
+    //empty constructor
+    public CountryLeaderboardDTO() {
+    }
+    
 
     public String getCountry() {
         return country;
