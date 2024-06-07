@@ -194,13 +194,15 @@ public class UserController {
 
         // Get the current date
         LocalDate currentDate = LocalDate.now(ZoneOffset.UTC);
+        ////////////////////////TESTING PURPOSES////////////////////////
         //debug print the current date
         System.out.println("Current Date: " + currentDate);
+        ////////////////////////TESTING PURPOSES////////////////////////
 
-        // // Check if the user is already participating in a tournament on the current date
-        // if (tournamentService.isUserParticipating(user, currentDate)) {
-        //     throw new AlreadyInTournamentException("User is already participating in a tournament on this date.");
-        // }
+        // Check if the user is already participating in a tournament on the current date
+        if (tournamentService.isUserParticipating(user, currentDate)) {
+            throw new AlreadyInTournamentException("User is already participating in a tournament on this date.");
+        }
         
         // Find eligible tournament
         Tournament tournament = tournamentService.findEligibleTournament(user, currentDate);

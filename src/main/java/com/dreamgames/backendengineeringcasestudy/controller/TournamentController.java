@@ -1,5 +1,6 @@
 package com.dreamgames.backendengineeringcasestudy.controller;
 
+import com.dreamgames.backendengineeringcasestudy.controller.response.ApiResponse;
 import com.dreamgames.backendengineeringcasestudy.dto.TournamentCompetitorScoreDTO;
 import com.dreamgames.backendengineeringcasestudy.service.TournamentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +21,9 @@ public class TournamentController {
     private TournamentService tournamentService;
 
     @GetMapping("/{tournamentId}/leadboard")
-    public ResponseEntity<List<TournamentCompetitorScoreDTO>> getCompetitorsByTournamentId(@PathVariable Long tournamentId) {
+    public ResponseEntity<ApiResponse<List<TournamentCompetitorScoreDTO>>> getCompetitorsByTournamentId(@PathVariable Long tournamentId) {
         List<TournamentCompetitorScoreDTO> competitors = tournamentService.getCompetitorsByTournamentId(tournamentId);
-        return new ResponseEntity<>(competitors, HttpStatus.OK);
+        ApiResponse<List<TournamentCompetitorScoreDTO>> response = new ApiResponse<>("Leadboard retrieved successfully", competitors);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
