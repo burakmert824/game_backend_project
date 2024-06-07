@@ -81,5 +81,8 @@ public class TournamentService {
         userTournamentRepository.save(userTournament);
     }
 
-    
+    public boolean hasUnclaimedTournaments(Long userId) {
+        return userTournamentRepository.hasUnclaimedTournaments(userId);
+    }
+
 }

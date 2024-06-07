@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.UserAlreadyExistsException;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.UserNotEligibleException;
+import com.dreamgames.backendengineeringcasestudy.controller.exception.UnclaimedTournamentException;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -139,17 +140,15 @@ public class UserController {
                 tournamentService.updateUserTournamentScore(userTournament, 1); // Example: add 100 points
             }
         }
-        
+
         ApiResponse<User> response = new ApiResponse<>("User level incremented successfully", updatedUser);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
    
-     /**
+    /**
      * Enter a user into the current tournament.
      * 
-     * Endpoint: POST /api/users/{id}/enter-tournament
-     * 
-     * Request Parameter: user (required)
+     * Endpoint: POST /users/{id}/enter-tournament
      * 
      * Actions:
      * - Checks if the user has more than 1000 coins and 20 level.
@@ -163,6 +162,8 @@ public class UserController {
      *   If not, throws NoTournamentAtThisHourException.
      * - Checks if the user is already participating in a tournament on the current date. 
      *   If yes, throws AlreadyInTournamentException.
+     * - Checks if the user has any unclaimed tournaments. 
+     *   If yes, throws UnclaimedTournamentException.
      * - If no eligible tournament is found, creates a new tournament.
      * 
      * Responses:
@@ -172,6 +173,7 @@ public class UserController {
      * - 400 Bad Request: User does not have enough coins.
      * - 400 Bad Request: No tournament at this hour.
      * - 400 Bad Request: User already in a tournament on this date.
+     * - 400 Bad Request: User has unclaimed tournaments.
      * 
      * @param id The ID of the user who wants to enter the tournament.
      * @return ResponseEntity with the ApiResponse containing the tournament details or an error message.
@@ -180,6 +182,7 @@ public class UserController {
      * @throws InsufficientCoinsException if the user does not have enough coins.
      * @throws NoTournamentAtThisHourException if the current time is not between 00:00 and 20:00 UTC.
      * @throws AlreadyInTournamentException if the user is already participating in a tournament on the current date.
+     * @throws UnclaimedTournamentException if the user has unclaimed tournaments.
      */
     @PostMapping("/{id}/enter-tournament")
     public ResponseEntity<ApiResponse<Tournament>> enterTournament(@PathVariable Long id) {
@@ -197,31 +200,26 @@ public class UserController {
             throw new InsufficientCoinsException("User does not have enough coins to enter the tournament.");
         }
 
+        // Check if the user has any unclaimed tournaments
+        if (tournamentService.hasUnclaimedTournaments(user.getId())) {
+            throw new UnclaimedTournamentException("User has unclaimed tournaments.");
+        }
+
         // Check if the current time is between 00:00 and 20:00 UTC
         LocalTime currentTime = LocalTime.now(ZoneOffset.UTC);
-        ////////////////////////TESTING PURPOSES////////////////////////
-        // set current time 8 for testing
-        //currentTime = LocalTime.of(8, 0);
-        //debug print the current time
-        System.out.println("Current Time: " + currentTime);
-        ////////////////////////TESTING PURPOSES////////////////////////
-
         if (currentTime.isBefore(LocalTime.of(0, 0)) || currentTime.isAfter(LocalTime.of(20, 0))) {
             throw new NoTournamentAtThisHourException("No tournament available at this hour.");
         }
 
         // Get the current date
         LocalDate currentDate = LocalDate.now(ZoneOffset.UTC);
-        ////////////////////////TESTING PURPOSES////////////////////////
-        //debug print the current date
-        System.out.println("Current Date: " + currentDate);
-        ////////////////////////TESTING PURPOSES////////////////////////
-
+        
+        //todo: this can be deleted because this tournament will be shown in the unclaimed tournament list
         // Check if the user is already participating in a tournament on the current date
         if (tournamentService.isUserParticipating(user, currentDate)) {
             throw new AlreadyInTournamentException("User is already participating in a tournament on this date.");
         }
-        
+
         // Find eligible tournament
         Tournament tournament = tournamentService.findEligibleTournament(user, currentDate);
         if (tournament == null) {
