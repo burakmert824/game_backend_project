@@ -3,7 +3,7 @@ package com.dreamgames.backendengineeringcasestudy.repository;
 
 import com.dreamgames.backendengineeringcasestudy.dto.TournamentCompetitorScoreDTO;
 import com.dreamgames.backendengineeringcasestudy.entity.UserTournament;
-
+import com.dreamgames.backendengineeringcasestudy.dto.CountryLeaderboardDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -47,4 +47,9 @@ public interface UserTournamentRepository extends JpaRepository<UserTournament, 
     @Query("SELECT ut FROM UserTournament ut WHERE ut.user.id = ?1 AND ut.isClaimed = false")
     List<UserTournament> findUnclaimedTournamentsByUserId(Long userId);
 
+
+    @Query("SELECT new com.dreamgames.backendengineeringcasestudy.dto.CountryLeaderboardDTO(ut.user.country, SUM(ut.score)) " +
+           "FROM UserTournament ut WHERE ut.tournament.id = ?1 " +
+           "GROUP BY ut.user.country ORDER BY SUM(ut.score) DESC")
+    List<CountryLeaderboardDTO> findCountryLeaderboardByTournamentId(Long tournamentId);
 }

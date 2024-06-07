@@ -8,6 +8,7 @@ import com.dreamgames.backendengineeringcasestudy.dto.TournamentCompetitorScoreD
 import com.dreamgames.backendengineeringcasestudy.repository.TournamentRepository;
 import com.dreamgames.backendengineeringcasestudy.repository.UserRepository;
 import com.dreamgames.backendengineeringcasestudy.repository.UserTournamentRepository;
+import com.dreamgames.backendengineeringcasestudy.dto.CountryLeaderboardDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -129,6 +130,11 @@ public class TournamentService {
 
         userTournament.setClaimed(true);
         userTournamentRepository.save(userTournament);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CountryLeaderboardDTO> getCountryLeaderboard(Long tournamentId) {
+        return userTournamentRepository.findCountryLeaderboardByTournamentId(tournamentId);
     }
 
 }
