@@ -1,30 +1,26 @@
 package com.dreamgames.backendengineeringcasestudy.entity;
 
+import jakarta.persistence.Table;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import java.util.Date;
+import jakarta.persistence.Column;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "tournaments")
 public class Tournament {
-
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Date date;
-    private boolean isStarted;
+    @Column(name = "is_started")
+    private Boolean isStarted;
 
-    // Constructors
-    public Tournament() {}
-
-    public Tournament(Date date, boolean isStarted) {
-        this.date = date;
-        this.isStarted = isStarted;
-    }
+    @Column(name = "date")
+    private LocalDate date;
 
     // Getters and setters
     public Long getId() {
@@ -35,19 +31,19 @@ public class Tournament {
         this.id = id;
     }
 
-    public Date getDate() {
-        return date;
-    }
-
-    public void setDate(Date date) {
-        this.date = date;
-    }
-
-    public boolean isStarted() {
+    public Boolean getIsStarted() {
         return isStarted;
     }
 
-    public void setStarted(boolean started) {
-        isStarted = started;
+    public void setIsStarted(Boolean isStarted) {
+        this.isStarted = isStarted;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 }

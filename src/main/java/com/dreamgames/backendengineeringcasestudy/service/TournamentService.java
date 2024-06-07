@@ -4,6 +4,7 @@ import com.dreamgames.backendengineeringcasestudy.entity.Tournament;
 import com.dreamgames.backendengineeringcasestudy.entity.User;
 import com.dreamgames.backendengineeringcasestudy.entity.UserTournament;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.AlreadyInTournamentException;
+import com.dreamgames.backendengineeringcasestudy.dto.TournamentCompetitorScoreDTO;
 import com.dreamgames.backendengineeringcasestudy.repository.TournamentRepository;
 import com.dreamgames.backendengineeringcasestudy.repository.UserRepository;
 import com.dreamgames.backendengineeringcasestudy.repository.UserTournamentRepository;
@@ -42,8 +43,7 @@ public class TournamentService {
     @Transactional
     public Tournament createTournament(LocalDate currentDate) {
         Tournament tournament = new Tournament();
-        tournament.setDate(Date.valueOf(currentDate));
-        tournament.setStarted(false);
+        tournament.setDate(currentDate);
         return tournamentRepository.save(tournament);
     }
 
@@ -58,7 +58,7 @@ public class TournamentService {
 
         int competitorCount = userTournamentRepository.countByTournamentId(tournament.getId());
         if (competitorCount == 5) {
-            tournament.setStarted(true);
+            tournament.setIsStarted(true);
             tournamentRepository.save(tournament);
         }
     }
@@ -67,5 +67,10 @@ public class TournamentService {
         return userTournamentRepository.existsByUserIdAndTournamentDate(user.getId(), currentDate);
     }
 
-    
+
+    public List<TournamentCompetitorScoreDTO> getCompetitorsByTournamentId(Long tournamentId) {
+        return userTournamentRepository.findCompetitorsByTournamentIdOrderByScoreDesc(tournamentId);
+    }
+
+
 }
