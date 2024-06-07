@@ -1,5 +1,6 @@
 package com.dreamgames.backendengineeringcasestudy.service;
 
+import com.dreamgames.backendengineeringcasestudy.controller.exception.ResourceNotFoundException;
 import com.dreamgames.backendengineeringcasestudy.dto.TournamentCompetitorScoreDTO;
 import com.dreamgames.backendengineeringcasestudy.entity.Tournament;
 import com.dreamgames.backendengineeringcasestudy.entity.User;
@@ -8,8 +9,7 @@ import com.dreamgames.backendengineeringcasestudy.repository.TournamentRepositor
 import com.dreamgames.backendengineeringcasestudy.repository.UserTournamentRepository;
 import com.dreamgames.backendengineeringcasestudy.repository.UserRepository;
 
-
-
+import java.util.Optional;
 import java.util.ArrayList;
 import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,8 +23,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -89,6 +91,63 @@ public class TournamentServiceTest {
         assertThat(createdTournament.getDate()).isEqualTo(currentDate);
     }
 
+        @Test
+    public void testIsUserParticipating() {
+        User user = new User();
+        user.setId(1L);
+        LocalDate currentDate = LocalDate.now();
+
+        when(userTournamentRepository.existsByUserIdAndTournamentDate(user.getId(), currentDate)).thenReturn(true);
+
+        boolean result = tournamentService.isUserParticipating(user, currentDate);
+
+        assertThat(result).isTrue();
+        verify(userTournamentRepository, times(1)).existsByUserIdAndTournamentDate(user.getId(), currentDate);
+    }
+
+    @Test
+    public void testGetCompetitorsByTournamentId() {
+        Long tournamentId = 1L;
+        TournamentCompetitorScoreDTO competitor = new TournamentCompetitorScoreDTO();
+        competitor.setUserId(1L);
+        competitor.setUsername("testuser");
+        competitor.setCountry("Turkey");
+        competitor.setScore(100);
+
+        List<TournamentCompetitorScoreDTO> competitors = Collections.singletonList(competitor);
+        when(userTournamentRepository.findCompetitorsByTournamentIdOrderByScoreDesc(tournamentId)).thenReturn(competitors);
+
+        List<TournamentCompetitorScoreDTO> result = tournamentService.getCompetitorsByTournamentId(tournamentId);
+
+        assertThat(result).isEqualTo(competitors);
+        verify(userTournamentRepository, times(1)).findCompetitorsByTournamentIdOrderByScoreDesc(tournamentId);
+    }
+
+    @Test
+    public void testGetActiveTournamentParticipation() {
+        Long userId = 1L;
+        LocalDate date = LocalDate.now();
+        UserTournament userTournament = new UserTournament();
+
+        when(userTournamentRepository.findActiveTournamentParticipation(userId, date)).thenReturn(userTournament);
+
+        UserTournament result = tournamentService.getActiveTournamentParticipation(userId, date);
+
+        assertThat(result).isEqualTo(userTournament);
+        verify(userTournamentRepository, times(1)).findActiveTournamentParticipation(userId, date);
+    }
+
+    @Test
+    public void testUpdateUserTournamentScore() {
+        UserTournament userTournament = new UserTournament();
+        userTournament.setScore(100);
+
+        tournamentService.updateUserTournamentScore(userTournament, 50);
+
+        assertThat(userTournament.getScore()).isEqualTo(150);
+        verify(userTournamentRepository, times(1)).save(userTournament);
+    }
+
 
     @Test
     public void testAddUserToTournament() {
@@ -145,4 +204,50 @@ public class TournamentServiceTest {
         // Verify that the leaderboard includes the added user
         assertThat(leaderboard.size()).isEqualTo(5);
     }
+
+    @Test
+    public void testClaimTournamentPrize_Success() {
+        Long userId = 1L;
+        Long tournamentId = 1L;
+        int prize = 5000;
+
+        User user = new User();
+        user.setId(userId);
+        user.setCoins(1000);
+
+        UserTournament userTournament = new UserTournament();
+        userTournament.setUser(user);
+        userTournament.setClaimed(false);
+
+        when(userTournamentRepository.findByUserIdAndTournamentId(userId, tournamentId)).thenReturn(Optional.of(userTournament));
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userTournamentRepository.save(any(UserTournament.class))).thenReturn(userTournament);
+
+        tournamentService.claimTournamentPrize(userId, tournamentId, prize);
+
+        assertThat(user.getCoins()).isEqualTo(6000);
+        assertThat(userTournament.isClaimed()).isTrue();
+
+        verify(userRepository, times(1)).save(user);
+        verify(userTournamentRepository, times(1)).save(userTournament);
+    }
+
+    @Test
+    public void testClaimTournamentPrize_UserNotInTournament() {
+        Long userId = 1L;
+        Long tournamentId = 1L;
+        int prize = 5000;
+
+        when(userTournamentRepository.findByUserIdAndTournamentId(userId, tournamentId)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            tournamentService.claimTournamentPrize(userId, tournamentId, prize);
+        });
+
+        assertThat(exception.getMessage()).isEqualTo("User is not part of this tournament.");
+
+        verify(userRepository, never()).save(any(User.class));
+        verify(userTournamentRepository, never()).save(any(UserTournament.class));
+    }
+
 }
