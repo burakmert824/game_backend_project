@@ -28,17 +28,9 @@ public class UserService {
     public User updateUser(User user) {
         return userRepository.save(user);
     }
-
-    public void deleteUser(Long id) {
-        userRepository.deleteById(id);
-    }
-
-    public List<User> findUsersByCountry(String country) {
-        return userRepository.findByCountry(country);
-    }
-
+    
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
     }
-    
+
 }
