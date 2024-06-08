@@ -23,6 +23,7 @@ import com.dreamgames.backendengineeringcasestudy.controller.exception.UserAlrea
 import com.dreamgames.backendengineeringcasestudy.controller.exception.UserNotEligibleException;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.UnclaimedTournamentException;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
@@ -32,6 +33,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/users")
 public class UserController {
+
+    @Autowired
+    private Clock clock;
 
     @Autowired
     private UserService userService;
@@ -135,9 +139,9 @@ public class UserController {
         User updatedUser = userService.updateUser(user);
 
         // Check if the user is participating in any tournaments today that have started
-        LocalDate currentDate = LocalDate.now(ZoneOffset.UTC);
+        LocalDate currentDate = LocalDate.now(clock);
         UserTournament userTournament = tournamentService.getActiveTournamentParticipation(user.getId(), currentDate);
-        LocalTime currentTime = LocalTime.now(ZoneOffset.UTC);
+        LocalTime currentTime = LocalTime.now(clock);
         if (userTournament != null) {
             // Check if the current time is within tournament hours
             if (currentTime.isBefore(LocalTime.of(20, 0))) {
@@ -212,13 +216,13 @@ public class UserController {
         }
 
         // Check if the current time is between 00:00 and 20:00 UTC
-        LocalTime currentTime = LocalTime.now(ZoneOffset.UTC);
+        LocalTime currentTime = LocalTime.now(clock);
         if (currentTime.isBefore(LocalTime.of(0, 0)) || currentTime.isAfter(LocalTime.of(20, 0))) {
             throw new NoTournamentAtThisHourException("No tournament available at this hour.");
         }
 
         // Get the current date
-        LocalDate currentDate = LocalDate.now(ZoneOffset.UTC);
+        LocalDate currentDate = LocalDate.now(clock);
 
         // Check if the user is already participating in a tournament on the current date
         if (tournamentService.isUserParticipating(user, currentDate)) {
@@ -281,8 +285,8 @@ public class UserController {
             throw new NotEnoughCompetitorsException("Not enough competitors in the tournament.");
         }
 
-        LocalDate currentDate = LocalDate.now(ZoneOffset.UTC);
-        LocalTime currentTime = LocalTime.now(ZoneOffset.UTC);
+        LocalDate currentDate = LocalDate.now(clock);
+        LocalTime currentTime = LocalTime.now(clock);
         Tournament tournament = userTournament.getTournament();
         if (tournament.getDate().equals(currentDate) && currentTime.isBefore(LocalTime.of(20, 0))) {
             throw new TournamentNotEndedException("Tournament has not ended yet.");

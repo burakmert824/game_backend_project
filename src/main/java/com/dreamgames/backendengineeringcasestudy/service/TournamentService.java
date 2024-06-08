@@ -18,12 +18,16 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Clock;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.time.LocalTime;
 
 @Service
 public class TournamentService {
+
+    @Autowired
+    private Clock clock;
 
     @Autowired
     private TournamentRepository tournamentRepository;
@@ -101,8 +105,8 @@ public class TournamentService {
 
     public boolean hasUnclaimedTournaments(Long userId) {
         List<UserTournament> unclaimedTournaments = userTournamentRepository.findUnclaimedTournamentsByUserId(userId);
-        LocalDate currentDate = LocalDate.now(ZoneOffset.UTC);
-        LocalTime currentTime = LocalTime.now(ZoneOffset.UTC);
+        LocalDate currentDate = LocalDate.now(clock);
+        LocalTime currentTime = LocalTime.now(clock);
 
         for (UserTournament userTournament : unclaimedTournaments) {
             if (

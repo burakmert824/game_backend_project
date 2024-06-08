@@ -18,7 +18,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,12 +29,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class TournamentServiceTest {
+
+        // Some fixed date to make your tests
+    private final static LocalDate LOCAL_DATE = LocalDate.of(1989, 01, 13);
+
+    private final static LocalTime OUT_TOURNAMEN_TIME = LocalTime.of(23,0);
+    private final static LocalTime IN_TOURNAMEN_TIME = LocalTime.of(12,0);
+
+
+    //Mock your clock bean
+    @Mock
+    private Clock clock;
+
+    //field that will contain the fixed clock
+    private Clock fixedClock;
+
 
     @Mock
     private TournamentRepository tournamentRepository;
@@ -48,6 +67,13 @@ public class TournamentServiceTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        //tell your tests to return the specified LOCAL_DATE when calling LocalDate.now(clock)
+        fixedClock = Clock.fixed(
+            LOCAL_DATE.atTime(IN_TOURNAMEN_TIME).atZone(ZoneId.systemDefault()).toInstant(),
+            ZoneId.systemDefault());
+        doReturn(fixedClock.instant()).when(clock).instant();
+        doReturn(fixedClock.getZone()).when(clock).getZone();
     }
 
     @Test
@@ -67,7 +93,7 @@ public class TournamentServiceTest {
         when(userTournamentRepository.countByTournamentId(1L)).thenReturn(3);
         when(userTournamentRepository.countByTournamentId(2L)).thenReturn(5);
 
-        LocalDate currentDate = LocalDate.now();
+        LocalDate currentDate = LocalDate.now(clock);
         Tournament eligibleTournament = tournamentService.findEligibleTournament(user, currentDate);
 
         assertThat(eligibleTournament).isNotNull();
@@ -76,7 +102,7 @@ public class TournamentServiceTest {
 
     @Test
     public void testCreateTournament() {
-        LocalDate currentDate = LocalDate.now();
+        LocalDate currentDate = LocalDate.now(clock);
 
         Tournament tournament = new Tournament();
         tournament.setId(1L);
@@ -95,7 +121,7 @@ public class TournamentServiceTest {
     public void testIsUserParticipating() {
         User user = new User();
         user.setId(1L);
-        LocalDate currentDate = LocalDate.now();
+        LocalDate currentDate = LocalDate.now(clock);
 
         when(userTournamentRepository.existsByUserIdAndTournamentDate(user.getId(), currentDate)).thenReturn(true);
 
@@ -126,7 +152,7 @@ public class TournamentServiceTest {
     @Test
     public void testGetActiveTournamentParticipation() {
         Long userId = 1L;
-        LocalDate date = LocalDate.now();
+        LocalDate date = LocalDate.now(clock);
         UserTournament userTournament = new UserTournament();
 
         when(userTournamentRepository.findActiveTournamentParticipation(userId, date)).thenReturn(userTournament);

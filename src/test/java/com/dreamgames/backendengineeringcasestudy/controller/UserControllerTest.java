@@ -27,6 +27,21 @@ import static org.mockito.Mockito.*;
 
 public class UserControllerTest {
 
+
+    // Some fixed date to make your tests
+    private final static LocalDate LOCAL_DATE = LocalDate.of(1989, 01, 13);
+
+    private final static LocalTime OUT_TOURNAMEN_TIME = LocalTime.of(23,0);
+    private final static LocalTime IN_TOURNAMEN_TIME = LocalTime.of(12,0);
+
+
+    //Mock your clock bean
+    @Mock
+    private Clock clock;
+
+    //field that will contain the fixed clock
+    private Clock fixedClock;
+
     @Mock
     private UserService userService;
 
@@ -39,6 +54,16 @@ public class UserControllerTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        //tell your tests to return the specified LOCAL_DATE when calling LocalDate.now(clock)
+        fixedClock = Clock.fixed(
+            LOCAL_DATE.atTime(12,0).atZone(ZoneId.systemDefault()).toInstant(),
+            ZoneId.systemDefault());
+        
+        //current time 
+        // LOCAL_DATE.atTime(12,0).atZone(ZoneId.systemDefault()).toInstant()
+        doReturn(fixedClock.instant()).when(clock).instant();
+        doReturn(fixedClock.getZone()).when(clock).getZone();
     }
 
     /**
@@ -113,7 +138,7 @@ public class UserControllerTest {
         when(userService.updateUser(any(User.class))).thenReturn(user);
 
         UserTournament userTournament = new UserTournament(user, new Tournament(), false, 0);
-        when(tournamentService.getActiveTournamentParticipation(userId, LocalDate.now(ZoneOffset.UTC)))
+        when(tournamentService.getActiveTournamentParticipation(userId, LocalDate.now(clock)))
                 .thenReturn(userTournament);
 
         ResponseEntity<ApiResponse<User>> responseEntity = userController.incrementUserLevel(userId);
@@ -125,7 +150,7 @@ public class UserControllerTest {
 
         verify(userService, times(1)).getUserById(userId);
         verify(userService, times(1)).updateUser(any(User.class));
-        verify(tournamentService, times(1)).getActiveTournamentParticipation(userId, LocalDate.now(ZoneOffset.UTC));
+        verify(tournamentService, times(1)).getActiveTournamentParticipation(userId, LocalDate.now(clock));
         verify(tournamentService, times(1)).updateUserTournamentScore(userTournament, 1);
     }
 
@@ -165,7 +190,7 @@ public class UserControllerTest {
 
         when(userService.getUserById(userId)).thenReturn(user);
         when(userService.updateUser(any(User.class))).thenReturn(user);
-        when(tournamentService.getActiveTournamentParticipation(userId, LocalDate.now(ZoneOffset.UTC)))
+        when(tournamentService.getActiveTournamentParticipation(userId, LocalDate.now(clock)))
                 .thenReturn(null);
 
         ResponseEntity<ApiResponse<User>> responseEntity = userController.incrementUserLevel(userId);
@@ -177,89 +202,52 @@ public class UserControllerTest {
 
         verify(userService, times(1)).getUserById(userId);
         verify(userService, times(1)).updateUser(any(User.class));
-        verify(tournamentService, times(1)).getActiveTournamentParticipation(userId, LocalDate.now(ZoneOffset.UTC));
+        verify(tournamentService, times(1)).getActiveTournamentParticipation(userId, LocalDate.now(clock));
         verify(tournamentService, times(0)).updateUserTournamentScore(any(UserTournament.class), anyInt());
     }
 
-    // can't test this because of the static methods
     /**
      * Test for incrementUserLevel when within tournament hours.
      * Verifies that the user's level is incremented by one and 25 coins are added.
      * Checks if the user's tournament score is updated.
      */
-    // @Test
-    // public void testIncrementUserLevelWithinTournamentHours() {
-    //     Long userId = 1L;
-    //     User user = new User();
-    //     user.setId(userId);
-    //     user.setLevel(10);
-    //     user.setCoins(500);
+    @Test
+    public void testIncrementUserLevelWithinTournamentHours() {
+        Long userId = 1L;
+        User user = new User();
+        user.setId(userId);
+        user.setLevel(10);
+        user.setCoins(500);
 
-    //     when(userService.getUserById(userId)).thenReturn(user);
-    //     when(userService.updateUser(any(User.class))).thenReturn(user);
+        // Set up fixed clock to simulate the current date and time
+        fixedClock = Clock.fixed(
+            LOCAL_DATE.atTime(IN_TOURNAMEN_TIME).atZone(ZoneId.systemDefault()).toInstant(),
+            ZoneId.systemDefault());
 
-    //     UserTournament userTournament = new UserTournament(user, new Tournament(), false, 0);
-    //     when(tournamentService.getActiveTournamentParticipation(userId, LocalDate.now(ZoneOffset.UTC)))
-    //             .thenReturn(userTournament);
+        doReturn(fixedClock.instant()).when(clock).instant();
+        doReturn(fixedClock.getZone()).when(clock).getZone();
 
-    //     // Mock LocalDate and LocalTime
-    //     LocalDate mockDate = LocalDate.of(2024, 6, 7);
-    //     LocalTime mockTime = LocalTime.of(10, 0); // within tournament hours
+        when(userService.getUserById(userId)).thenReturn(user);
+        when(userService.updateUser(any(User.class))).thenReturn(user);
 
-        
-    //     try(MockedStatic<LocalDate> mylocaldate = Mockito.mockStatic(LocalDate.class)){
+        UserTournament userTournament = new UserTournament(user, new Tournament(), false, 0);
+        when(tournamentService.getActiveTournamentParticipation(userId, LocalDate.now(clock)))
+                .thenReturn(userTournament);
 
-    //         //mylocaldate.when(() -> LocalDate.now()).thenReturn(mockDate);
-    //         //mockedLocalTime.when(() -> LocalTime.now()).thenReturn(mockTime);
+        ResponseEntity<ApiResponse<User>> responseEntity = userController.incrementUserLevel(userId);
 
-    //         ResponseEntity<ApiResponse<User>> responseEntity = userController.incrementUserLevel(userId);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(responseEntity.getBody().getMessage()).isEqualTo("User level incremented successfully");
+        assertThat(responseEntity.getBody().getData().getLevel()).isEqualTo(11);
+        assertThat(responseEntity.getBody().getData().getCoins()).isEqualTo(525);
 
-    //         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-    //         assertThat(responseEntity.getBody().getMessage()).isEqualTo("User level incremented successfully");
-    //         assertThat(responseEntity.getBody().getData().getLevel()).isEqualTo(11);
-    //         assertThat(responseEntity.getBody().getData().getCoins()).isEqualTo(525);
+        verify(userService, times(1)).getUserById(userId);
+        verify(userService, times(1)).updateUser(any(User.class));
+        verify(tournamentService, times(1)).getActiveTournamentParticipation(userId, LocalDate.now(clock));
+        verify(tournamentService, times(1)).updateUserTournamentScore(userTournament, 1);
 
-    //         verify(userService, times(1)).getUserById(userId);
-    //         verify(userService, times(1)).updateUser(any(User.class));
-    //         verify(tournamentService, times(1)).getActiveTournamentParticipation(userId, LocalDate.now(ZoneOffset.UTC));
-    //         verify(tournamentService, times(1)).updateUserTournamentScore(userTournament, 1);
-    //     }
-    // }
+        // Verify that the UserTournament score was updated
+        //assertThat(userTournament.getScore()).isEqualTo(1);
+    }
 
-    // cant test this because of the static methods
-    // /**
-    //  * Test for incrementUserLevel when outside tournament hours.
-    //  * Verifies that the user's level is incremented by one and 25 coins are added.
-    //  * Ensures that the user's tournament score is not updated.
-    //  */
-    // @Test
-    // public void testIncrementUserLevelOutsideTournamentHours() {
-    //     Long userId = 1L;
-    //     User user = new User();
-    //     user.setId(userId);
-    //     user.setLevel(10);
-    //     user.setCoins(500);
-
-    //     when(userService.getUserById(userId)).thenReturn(user);
-    //     when(userService.updateUser(any(User.class))).thenReturn(user);
-
-    //     UserTournament userTournament = new UserTournament(user, new Tournament(), false, 0);
-    //     when(tournamentService.getActiveTournamentParticipation(userId, LocalDate.now(ZoneOffset.UTC)))
-    //             .thenReturn(userTournament);
-
-    //     LocalTime currentTime = LocalTime.of(22, 0); // outside tournament hours
-    //     when(LocalTime.now(ZoneOffset.UTC)).thenReturn(currentTime);
-
-    //     ResponseEntity<ApiResponse<User>> responseEntity = userController.incrementUserLevel(userId);
-
-    //     assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-    //     assertThat(responseEntity.getBody().getMessage()).isEqualTo("User level incremented successfully");
-    //     assertThat(responseEntity.getBody().getData().getLevel()).isEqualTo(11);
-    //     assertThat(responseEntity.getBody().getData().getCoins()).isEqualTo(525);
-
-    //     verify(userService, times(1)).getUserById(userId);
-    //     verify(userService, times(1)).updateUser(any(User.class));
-    //     verify(tournamentService, times(1)).getActiveTournamentParticipation(userId, LocalDate.now(ZoneOffset.UTC));
-    //     verify(tournamentService, times(0)).updateUserTournamentScore(any(UserTournament.class), anyInt());
-    // }
 }
