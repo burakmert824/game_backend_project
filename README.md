@@ -30,5 +30,4 @@ Some problems that I encountered:
   Calculating the ranking was a problem because it should find the group every time before calculating the ranking. Instead, I could have stored the ranking data in the user-tournament relationship. But in this alternative, I had to dynamically change the ranking while the tournaments continued, which is a problem. I didn't choose this alternative for my implementation because checking the whole group every time was easy to implement and it would give the true real-time answer every time.
   I could use some caching strategies to hold the data so that the same SQL query would not have been sent multiple times.
   I had trouble testing static functions for getting the date and time. To fix this and make the code testable, I made a Clock bean and used it everywhere I needed the date and time. Then, I mocked the Clock in my tests. This way, I didn't need to mock static functions.
-
-
+  I had trouble displaying data when the same request returned different types of responses depending on the situation. For example, increasing the level should return a score if the user is in a tournament, but it shouldn't return a score if the user is not in a tournament. To solve this problem, I created a stable response format. If a field was not relevant to the response, I returned null for that field.
