@@ -99,6 +99,9 @@ public class TournamentController {
     @GetMapping("/{tournamentId}/leadboard")
     public ResponseEntity<ApiResponse<List<TournamentCompetitorScoreDTO>>> getCompetitorsByTournamentId(@PathVariable Long tournamentId) {
         List<TournamentCompetitorScoreDTO> competitors = tournamentService.getCompetitorsByTournamentId(tournamentId);
+        if (competitors.isEmpty()) {
+            throw new ResourceNotFoundException("No tournaments found with given id: " + tournamentId);
+        }
         ApiResponse<List<TournamentCompetitorScoreDTO>> response = new ApiResponse<>("Leadboard retrieved successfully", competitors);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

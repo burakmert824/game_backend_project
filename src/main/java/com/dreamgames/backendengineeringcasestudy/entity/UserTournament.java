@@ -38,6 +38,10 @@ public class UserTournament {
         this.id = new UserTournamentId(user.getId(), tournament.getId());
     }
 
+    public UserTournament(User user) {
+        this.user = user;
+    }
+
     // Getters and setters
     public UserTournamentId getId() {
         return id;
