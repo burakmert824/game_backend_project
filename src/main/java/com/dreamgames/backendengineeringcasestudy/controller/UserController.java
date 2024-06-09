@@ -22,12 +22,14 @@ import org.springframework.web.bind.annotation.*;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.UserAlreadyExistsException;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.UserNotEligibleException;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.UnclaimedTournamentException;
+import java.util.Map;
 
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.Random;
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -100,58 +102,64 @@ public class UserController {
     }
 
    
-    /**
-     * Increment user's level by one and add 25 coins.
-     * 
-     * Endpoint: PATCH /api/users/{id}/increment-level
-     * 
-     * Actions:
-     * - Retrieves the user by ID.
-     * - Increases the user's level by one.
-     * - Adds 25 coins to the user's current coins.
-     * - Checks if the user is participating in any tournaments today that have started.
-     * - If participating, checks if the current time is within tournament hours (00:00 to 20:00 UTC).
-     * - If within hours, updates the tournament score by adding a specified amount.
-     * - Saves the updated user and user-tournament.
-     * 
-     * Responses:
-     * - 200 OK: User level incremented successfully.
-     * - 404 Not Found: User not found.
-     * - 400 Bad Request: Tournament not within hours.
-     * - 500 Internal Server Error: Other errors.
-     * 
-     * Example:
-     * curl -X PATCH "http://localhost:8080/api/users/1/increment-level"
-     * 
-     * @param id The ID of the user whose level is to be incremented.
-     * @return ResponseEntity with the ApiResponse containing the updated user or an error message.
-     * @throws ResourceNotFoundException if the user is not found.
-     */
-    @PatchMapping("/{id}/increment-level")
-    public ResponseEntity<ApiResponse<User>> incrementUserLevel(@PathVariable Long id) {
-        User user = userService.getUserById(id);
-        if (user == null) {
-            throw new ResourceNotFoundException("User not found with id: " + id);
-        }
-
-        user.setLevel(user.getLevel() + 1);
-        user.setCoins(user.getCoins() + 25);
-        User updatedUser = userService.updateUser(user);
-
-        // Check if the user is participating in any tournaments today that have started
-        LocalDate currentDate = LocalDate.now(clock);
-        UserTournament userTournament = tournamentService.getActiveTournamentParticipation(user.getId(), currentDate);
-        LocalTime currentTime = LocalTime.now(clock);
-        if (userTournament != null) {
-            // Check if the current time is within tournament hours
-            if (currentTime.isBefore(LocalTime.of(20, 0))) {
-                tournamentService.updateUserTournamentScore(userTournament, 1); // Example: add 100 points
-            }
-        }
-
-        ApiResponse<User> response = new ApiResponse<>("User level incremented successfully", updatedUser);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+/**
+ * Increment user's level by one and add 25 coins.
+ * 
+ * Endpoint: PATCH /api/users/{id}/increment-level
+ * 
+ * Actions:
+ * - Retrieves the user by ID.
+ * - Increases the user's level by one.
+ * - Adds 25 coins to the user's current coins.
+ * - Checks if the user is participating in any tournaments today that have started.
+ * - If participating, checks if the current time is within tournament hours (00:00 to 20:00 UTC).
+ * - If within hours, updates the tournament score by adding a specified amount.
+ * - Saves the updated user and user-tournament.
+ * 
+ * Responses:
+ * - 200 OK: User level incremented successfully.
+ * - 404 Not Found: User not found.
+ * - 400 Bad Request: Tournament not within hours.
+ * - 500 Internal Server Error: Other errors.
+ * 
+ * Example:
+ * curl -X PATCH "http://localhost:8080/api/users/1/increment-level"
+ * 
+ * @param id The ID of the user whose level is to be incremented.
+ * @return ResponseEntity with the ApiResponse containing the updated user or an error message.
+ * @throws ResourceNotFoundException if the user is not found.
+ */
+@PatchMapping("/{id}/increment-level")
+public ResponseEntity<ApiResponse<Map<String, Object>>> incrementUserLevel(@PathVariable Long id) {
+    User user = userService.getUserById(id);
+    if (user == null) {
+        throw new ResourceNotFoundException("User not found with id: " + id);
     }
+
+    user.setLevel(user.getLevel() + 1);
+    user.setCoins(user.getCoins() + 25);
+    User updatedUser = userService.updateUser(user);
+
+    Map<String, Object> responseData = new HashMap<>();
+    responseData.put("user", updatedUser);
+    responseData.put("userTournament", null);
+
+    // Check if the user is participating in any tournaments today that have started
+    LocalDate currentDate = LocalDate.now(clock);
+    UserTournament userTournament = tournamentService.getActiveTournamentParticipation(user.getId(), currentDate);
+    LocalTime currentTime = LocalTime.now(clock);
+    if (userTournament != null) {
+        // Check if the current time is within tournament hours
+        if (currentTime.isBefore(LocalTime.of(20, 0))) {
+            tournamentService.updateUserTournamentScore(userTournament, 1); // Example: add 1 point
+            responseData.put("tournament", userTournament);
+        }
+    }
+
+    ApiResponse<Map<String, Object>> response = new ApiResponse<>("User level incremented successfully", responseData);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+}
+
    
     /**
      * Enter a user into the current tournament.

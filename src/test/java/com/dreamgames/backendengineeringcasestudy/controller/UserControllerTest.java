@@ -16,6 +16,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import java.time.*;
+import java.util.Map;
 
 
 import java.util.Random;
@@ -141,17 +142,20 @@ public class UserControllerTest {
         when(tournamentService.getActiveTournamentParticipation(userId, LocalDate.now(clock)))
                 .thenReturn(userTournament);
 
-        ResponseEntity<ApiResponse<User>> responseEntity = userController.incrementUserLevel(userId);
+        ResponseEntity<ApiResponse<Map<String, Object>>> response = userController.incrementUserLevel(userId);
+        User responseEntity = (User) response.getBody().getData().get("user");
+        UserTournament responsUserTournament = (UserTournament) response.getBody().getData().get("userTournament");
 
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(responseEntity.getBody().getMessage()).isEqualTo("User level incremented successfully");
-        assertThat(responseEntity.getBody().getData().getLevel()).isEqualTo(11);
-        assertThat(responseEntity.getBody().getData().getCoins()).isEqualTo(525);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getMessage()).isEqualTo("User level incremented successfully");
+        assertThat(responseEntity.getLevel()).isEqualTo(11);
+        assertThat(responseEntity.getCoins()).isEqualTo(525);
 
         verify(userService, times(1)).getUserById(userId);
         verify(userService, times(1)).updateUser(any(User.class));
         verify(tournamentService, times(1)).getActiveTournamentParticipation(userId, LocalDate.now(clock));
         verify(tournamentService, times(1)).updateUserTournamentScore(userTournament, 1);
+        assertThat(responsUserTournament.getScore()).isEqualTo(1);
     }
 
     /**
@@ -193,12 +197,12 @@ public class UserControllerTest {
         when(tournamentService.getActiveTournamentParticipation(userId, LocalDate.now(clock)))
                 .thenReturn(null);
 
-        ResponseEntity<ApiResponse<User>> responseEntity = userController.incrementUserLevel(userId);
-
+        ResponseEntity<ApiResponse<Map<String, Object>>> responseEntity = userController.incrementUserLevel(userId);
+        User repsonUser = (User) responseEntity.getBody().getData().get("user");
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(responseEntity.getBody().getMessage()).isEqualTo("User level incremented successfully");
-        assertThat(responseEntity.getBody().getData().getLevel()).isEqualTo(11);
-        assertThat(responseEntity.getBody().getData().getCoins()).isEqualTo(525);
+        assertThat(repsonUser.getLevel()).isEqualTo(11);
+        assertThat(repsonUser.getCoins()).isEqualTo(525);
 
         verify(userService, times(1)).getUserById(userId);
         verify(userService, times(1)).updateUser(any(User.class));
@@ -218,12 +222,13 @@ public class UserControllerTest {
         user.setId(userId);
         user.setLevel(10);
         user.setCoins(500);
-
-        // Set up fixed clock to simulate the current date and time
+        // tell your tests to return the specified LOCAL_DATE when calling LocalDate.now(clock)
         fixedClock = Clock.fixed(
             LOCAL_DATE.atTime(IN_TOURNAMEN_TIME).atZone(ZoneId.systemDefault()).toInstant(),
             ZoneId.systemDefault());
 
+        // current time 
+        // LOCAL_DATE.atTime(12,0).atZone(ZoneId.systemDefault()).toInstant()
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
 
@@ -234,12 +239,13 @@ public class UserControllerTest {
         when(tournamentService.getActiveTournamentParticipation(userId, LocalDate.now(clock)))
                 .thenReturn(userTournament);
 
-        ResponseEntity<ApiResponse<User>> responseEntity = userController.incrementUserLevel(userId);
+        ResponseEntity<ApiResponse<Map<String, Object>>> responseEntity = userController.incrementUserLevel(userId);
 
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(responseEntity.getBody().getMessage()).isEqualTo("User level incremented successfully");
-        assertThat(responseEntity.getBody().getData().getLevel()).isEqualTo(11);
-        assertThat(responseEntity.getBody().getData().getCoins()).isEqualTo(525);
+        assertThat(((User) responseEntity.getBody().getData().get("user")).getLevel()).isEqualTo(11);
+        assertThat(((User) responseEntity.getBody().getData().get("user")).getCoins()).isEqualTo(525);
+        assertThat(responseEntity.getBody().getData().get("tournament")).isNotNull();
 
         verify(userService, times(1)).getUserById(userId);
         verify(userService, times(1)).updateUser(any(User.class));
@@ -247,7 +253,9 @@ public class UserControllerTest {
         verify(tournamentService, times(1)).updateUserTournamentScore(userTournament, 1);
 
         // Verify that the UserTournament score was updated
-        //assertThat(userTournament.getScore()).isEqualTo(1);
+        assertThat(userTournament.getScore()).isEqualTo(1);
     }
+
+    
 
 }
