@@ -8,11 +8,10 @@ Service Layer: Contains business logic.
 Repository Layer: Interacts with the database.
 Entity Layer: Defines the data model.
 
-Database explanation:
-My database has three table: 
-users for holding user information(id,username,country,coin,level),
-tournaments for holding torunament's groups information (id,date,flag for started or not)
-userTournament for holding the relationship between the users and tournaments(user_id,tournament_id, flag for claiming the revard, score of the tournament)
+My database has three tables:
+- users for holding user information (id, username, country, coins, level).
+- tournaments for holding tournament information (id, date, is_started).
+- user_tournament for holding the relationship between users and tournaments (user_id, tournament_id, is_claimed, score).
 
 
 Design Choices:
