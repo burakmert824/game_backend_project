@@ -138,18 +138,24 @@ public class TournamentService {
     }
     
     @Transactional
-    public void claimTournamentPrize(Long userId, Long tournamentId, int prize) {
+    public Map<String, Object> claimTournamentPrize(Long userId, Long tournamentId, int prize) {
         UserTournament userTournament = userTournamentRepository.findByUserIdAndTournamentId(userId, tournamentId).orElse(null);
         if (userTournament == null) {
             throw new ResourceNotFoundException("User is not part of this tournament.");
         }
-
+    
         User user = userTournament.getUser();
         user.setCoins(user.getCoins() + prize);
         userRepository.save(user);
-
+    
         userTournament.setClaimed(true);
         userTournamentRepository.save(userTournament);
+    
+        Map<String, Object> response = new HashMap<>();
+        response.put("user", user);
+        response.put("userTournament", userTournament);
+    
+        return response;
     }
 
     @Transactional(readOnly = true)
