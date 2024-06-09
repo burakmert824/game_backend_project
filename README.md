@@ -12,6 +12,7 @@ My database has three tables:
 - users for holding user information (id, username, country, coins, level).
 - tournaments for holding tournament information (id, date, is_started).
 - user_tournament for holding the relationship between users and tournaments (user_id, tournament_id, is_claimed, score).
+Every day new tournament starts tournament has different groups but their date is the same. User can have same username but all of their id is unique.
 
 
 Design Choices:
