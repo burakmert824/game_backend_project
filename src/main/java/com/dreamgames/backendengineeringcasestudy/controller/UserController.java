@@ -139,7 +139,9 @@ public ResponseEntity<ApiResponse<UserTournament> >incrementUserLevel(@PathVaria
     user.setLevel(user.getLevel() + 1);
     user.setCoins(user.getCoins() + 25);
     User updatedUser = userService.updateUser(user);
-    UserTournament responseData = null;
+    // initialize response data with empty constructor
+    UserTournament responseData = new UserTournament();
+    responseData.setUser(updatedUser);
 
     // Check if the user is participating in any tournaments today that have started
     LocalDate currentDate = LocalDate.now(clock);
@@ -151,7 +153,6 @@ public ResponseEntity<ApiResponse<UserTournament> >incrementUserLevel(@PathVaria
             responseData = tournamentService.updateUserTournamentScore(userTournament, 1); // Example: add 1 point
         }
     }
-
     ApiResponse<UserTournament> response = new ApiResponse<>("User level incremented successfully", responseData);
     return new ResponseEntity<>(response, HttpStatus.OK);
 }
@@ -263,7 +264,7 @@ public ResponseEntity<ApiResponse<UserTournament> >incrementUserLevel(@PathVaria
      * - Marks the prize as claimed for the tournament.
      * 
      * Responses:
-     * - 200 OK: Tournament prize claimed successfully. Returns the updated user and userTournament.
+     * - 200 OK: Tournament prize claimed successfully. Returns the updated userTournament.
      * - 404 Not Found: User or tournament not found.
      * - 400 Bad Request: Not enough competitors, prize already claimed, or tournament not ended.
      * 
@@ -282,7 +283,7 @@ public ResponseEntity<ApiResponse<UserTournament> >incrementUserLevel(@PathVaria
      * @throws TournamentNotEndedException if the tournament has not ended yet.
      */
     @PostMapping("/{userId}/tournaments/{tournamentId}/claim-prize")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> claimTournamentPrize(@PathVariable Long userId, @PathVariable Long tournamentId) {
+    public ResponseEntity<ApiResponse<UserTournament>> claimTournamentPrize(@PathVariable Long userId, @PathVariable Long tournamentId) {
         User user = userService.getUserById(userId);
         if (user == null) {
             throw new ResourceNotFoundException("User not found with id: " + userId);
@@ -328,9 +329,9 @@ public ResponseEntity<ApiResponse<UserTournament> >incrementUserLevel(@PathVaria
             prize = 5000;
         }
 
-        Map<String, Object> result = tournamentService.claimTournamentPrize(userId, tournamentId, prize);
+        UserTournament result = tournamentService.claimTournamentPrize(userId, tournamentId, prize);
 
-        ApiResponse<Map<String, Object>> response = new ApiResponse<>("Tournament prize claimed successfully", result);
+        ApiResponse<UserTournament> response = new ApiResponse<>("Tournament prize claimed successfully", result);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
