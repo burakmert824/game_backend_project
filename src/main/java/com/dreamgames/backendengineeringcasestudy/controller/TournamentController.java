@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Clock;
 import java.time.LocalDate;
-
 import java.util.List;
 
 @RestController
@@ -120,6 +119,9 @@ public class TournamentController {
      * - 404 Not Found: No tournaments found on the given date.
      * - 500 Internal Server Error: Other errors.
      * 
+     * Example:
+     * curl -X GET "http://localhost:8080/tournaments/country-leaderboard?date=2023-06-01"
+     * 
      * @param date The date of the tournaments.
      * @return ResponseEntity with the ApiResponse containing the leaderboard data or an error message.
      */
@@ -133,3 +135,4 @@ public class TournamentController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
+
