@@ -19,6 +19,7 @@ Layered Architecture is quite useful for developing complicated projects because
 I want to make a stable response that always returns a JSON that includes data and message, this helps the receiver to know what is going to happen even if there is an error.
 I tried to write custom exceptions, in that way, I could see the exceptions more easily and it helped me to maintain exceptions.
 I tried to write unit tests to ensure that my system was working correctly.
+I tried to write documented code to create easy to understand codebase
 
 In this project, I tried to write with clean architecture, stick to the separation of concerns, and do best practices for the backend to make my project more maintainable.
 
