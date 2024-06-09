@@ -114,7 +114,7 @@ public class UserController {
  * - Checks if the user is participating in any tournaments today that have started.
  * - If participating, checks if the current time is within tournament hours (00:00 to 20:00 UTC).
  * - If within hours, updates the tournament score by adding a specified amount.
- * - Saves the updated user and user-tournament.
+ * - Saves the updated user-tournament.
  * 
  * Responses:
  * - 200 OK: User level incremented successfully.
@@ -126,11 +126,11 @@ public class UserController {
  * curl -X PATCH "http://localhost:8080/api/users/1/increment-level"
  * 
  * @param id The ID of the user whose level is to be incremented.
- * @return ResponseEntity with the ApiResponse containing the updated user or an error message.
+ * @return ResponseEntity with the ApiResponse containing the updated user tournament or an error message.
  * @throws ResourceNotFoundException if the user is not found.
  */
 @PatchMapping("/{id}/increment-level")
-public ResponseEntity<ApiResponse<Map<String, Object>>> incrementUserLevel(@PathVariable Long id) {
+public ResponseEntity<ApiResponse<UserTournament> >incrementUserLevel(@PathVariable Long id) {
     User user = userService.getUserById(id);
     if (user == null) {
         throw new ResourceNotFoundException("User not found with id: " + id);
@@ -139,10 +139,7 @@ public ResponseEntity<ApiResponse<Map<String, Object>>> incrementUserLevel(@Path
     user.setLevel(user.getLevel() + 1);
     user.setCoins(user.getCoins() + 25);
     User updatedUser = userService.updateUser(user);
-
-    Map<String, Object> responseData = new HashMap<>();
-    responseData.put("user", updatedUser);
-    responseData.put("userTournament", null);
+    UserTournament responseData = null;
 
     // Check if the user is participating in any tournaments today that have started
     LocalDate currentDate = LocalDate.now(clock);
@@ -151,12 +148,11 @@ public ResponseEntity<ApiResponse<Map<String, Object>>> incrementUserLevel(@Path
     if (userTournament != null) {
         // Check if the current time is within tournament hours
         if (currentTime.isBefore(LocalTime.of(20, 0))) {
-            tournamentService.updateUserTournamentScore(userTournament, 1); // Example: add 1 point
-            responseData.put("tournament", userTournament);
+            responseData = tournamentService.updateUserTournamentScore(userTournament, 1); // Example: add 1 point
         }
     }
 
-    ApiResponse<Map<String, Object>> response = new ApiResponse<>("User level incremented successfully", responseData);
+    ApiResponse<UserTournament> response = new ApiResponse<>("User level incremented successfully", responseData);
     return new ResponseEntity<>(response, HttpStatus.OK);
 }
 

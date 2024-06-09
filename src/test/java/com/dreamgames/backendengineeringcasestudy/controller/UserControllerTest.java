@@ -135,95 +135,7 @@ public class UserControllerTest {
     }
 
 
-        /**
-     * Test for incrementUserLevel.
-     * Verifies that the user's level is incremented by one and 25 coins are added.
-     * Checks if the user is participating in any tournaments today and updates the tournament score if applicable.
-     */
-    @Test
-    public void testIncrementUserLevel() {
-        Long userId = 1L;
-        User user = new User();
-        user.setId(userId);
-        user.setLevel(10);
-        user.setCoins(500);
-
-        when(userService.getUserById(userId)).thenReturn(user);
-        when(userService.updateUser(any(User.class))).thenReturn(user);
-
-        UserTournament userTournament = new UserTournament(user, new Tournament(), false, 0);
-        when(tournamentService.getActiveTournamentParticipation(userId, LocalDate.now(clock)))
-                .thenReturn(userTournament);
-
-        ResponseEntity<ApiResponse<Map<String, Object>>> response = userController.incrementUserLevel(userId);
-        User responseEntity = (User) response.getBody().getData().get("user");
-        UserTournament responsUserTournament = (UserTournament) response.getBody().getData().get("userTournament");
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().getMessage()).isEqualTo("User level incremented successfully");
-        assertThat(responseEntity.getLevel()).isEqualTo(11);
-        assertThat(responseEntity.getCoins()).isEqualTo(525);
-
-        verify(userService, times(1)).getUserById(userId);
-        verify(userService, times(1)).updateUser(any(User.class));
-        verify(tournamentService, times(1)).getActiveTournamentParticipation(userId, LocalDate.now(clock));
-        verify(tournamentService, times(1)).updateUserTournamentScore(userTournament, 1);
-        assertThat(responsUserTournament.getScore()).isEqualTo(1);
-    }
-
-    /**
-     * Test for incrementUserLevel when user not found.
-     * Verifies that a ResourceNotFoundException is thrown when the user does not exist.
-     */
-    @Test
-    public void testIncrementUserLevelUserNotFound() {
-        Long userId = 1L;
-
-        when(userService.getUserById(userId)).thenReturn(null);
-
-        try {
-            userController.incrementUserLevel(userId);
-        } catch (ResourceNotFoundException ex) {
-            assertThat(ex.getMessage()).isEqualTo("User not found with id: " + userId);
-        }
-
-        verify(userService, times(1)).getUserById(userId);
-        verify(userService, times(0)).updateUser(any(User.class));
-        verify(tournamentService, times(0)).getActiveTournamentParticipation(anyLong(), any(LocalDate.class));
-        verify(tournamentService, times(0)).updateUserTournamentScore(any(UserTournament.class), anyInt());
-    }
-
-    /**
-     * Test for incrementUserLevel when no active tournament participation.
-     * Verifies that the user's level is incremented by one and 25 coins are added.
-     */
-    @Test
-    public void testIncrementUserLevelNoActiveTournamentParticipation() {
-        Long userId = 1L;
-        User user = new User();
-        user.setId(userId);
-        user.setLevel(10);
-        user.setCoins(500);
-
-        when(userService.getUserById(userId)).thenReturn(user);
-        when(userService.updateUser(any(User.class))).thenReturn(user);
-        when(tournamentService.getActiveTournamentParticipation(userId, LocalDate.now(clock)))
-                .thenReturn(null);
-
-        ResponseEntity<ApiResponse<Map<String, Object>>> responseEntity = userController.incrementUserLevel(userId);
-        User repsonUser = (User) responseEntity.getBody().getData().get("user");
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(responseEntity.getBody().getMessage()).isEqualTo("User level incremented successfully");
-        assertThat(repsonUser.getLevel()).isEqualTo(11);
-        assertThat(repsonUser.getCoins()).isEqualTo(525);
-
-        verify(userService, times(1)).getUserById(userId);
-        verify(userService, times(1)).updateUser(any(User.class));
-        verify(tournamentService, times(1)).getActiveTournamentParticipation(userId, LocalDate.now(clock));
-        verify(tournamentService, times(0)).updateUserTournamentScore(any(UserTournament.class), anyInt());
-    }
-
-    /**
+   /**
      * Test for incrementUserLevel when within tournament hours.
      * Verifies that the user's level is incremented by one and 25 coins are added.
      * Checks if the user's tournament score is updated.
@@ -235,39 +147,118 @@ public class UserControllerTest {
         user.setId(userId);
         user.setLevel(10);
         user.setCoins(500);
-        // tell your tests to return the specified LOCAL_DATE when calling LocalDate.now(clock)
-        fixedClock = Clock.fixed(
-            LOCAL_DATE.atTime(IN_TOURNAMENT_TIME).atZone(ZoneId.systemDefault()).toInstant(),
-            ZoneId.systemDefault());
 
-        // current time 
-        // LOCAL_DATE.atTime(12,0).atZone(ZoneId.systemDefault()).toInstant()
+        UserTournament userTournament = new UserTournament(user, new Tournament(), false, 0);
+
+        when(userService.getUserById(userId)).thenReturn(user);
+        when(userService.updateUser(any(User.class))).thenReturn(user);
+        when(tournamentService.getActiveTournamentParticipation(userId, LOCAL_DATE)).thenReturn(userTournament);
+        when(tournamentService.updateUserTournamentScore(userTournament, 1)).thenReturn(userTournament);
+
+        ResponseEntity<ApiResponse<UserTournament>> responseEntity = userController.incrementUserLevel(userId);
+
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(responseEntity.getBody().getMessage()).isEqualTo("User level incremented successfully");
+        assertThat(responseEntity.getBody().getData()).isEqualTo(userTournament);
+        assertThat(user.getLevel()).isEqualTo(11);
+        assertThat(user.getCoins()).isEqualTo(525);
+
+        verify(userService, times(1)).getUserById(userId);
+        verify(userService, times(1)).updateUser(any(User.class));
+        verify(tournamentService, times(1)).getActiveTournamentParticipation(userId, LOCAL_DATE);
+        verify(tournamentService, times(1)).updateUserTournamentScore(userTournament, 1);
+    }
+
+    /**
+     * Test for incrementUserLevel when outside tournament hours.
+     * Verifies that the user's level is incremented by one and 25 coins are added.
+     * Ensures that the user's tournament score is not updated.
+     */
+    @Test
+    public void testIncrementUserLevelOutsideTournamentHours() {
+        Long userId = 1L;
+        User user = new User();
+        user.setId(userId);
+        user.setLevel(10);
+        user.setCoins(500);
+
+        fixedClock = Clock.fixed(
+            LOCAL_DATE.atTime(OUT_TOURNAMENT_TIME).atZone(ZoneId.systemDefault()).toInstant(),
+            ZoneId.systemDefault());
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
 
         when(userService.getUserById(userId)).thenReturn(user);
         when(userService.updateUser(any(User.class))).thenReturn(user);
+        when(tournamentService.getActiveTournamentParticipation(userId, LOCAL_DATE)).thenReturn(null);
 
-        UserTournament userTournament = new UserTournament(user, new Tournament(), false, 0);
-        when(tournamentService.getActiveTournamentParticipation(userId, LocalDate.now(clock)))
-                .thenReturn(userTournament);
-
-        ResponseEntity<ApiResponse<Map<String, Object>>> responseEntity = userController.incrementUserLevel(userId);
+        ResponseEntity<ApiResponse<UserTournament>> responseEntity = userController.incrementUserLevel(userId);
 
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(responseEntity.getBody().getMessage()).isEqualTo("User level incremented successfully");
-        assertThat(((User) responseEntity.getBody().getData().get("user")).getLevel()).isEqualTo(11);
-        assertThat(((User) responseEntity.getBody().getData().get("user")).getCoins()).isEqualTo(525);
-        assertThat(responseEntity.getBody().getData().get("tournament")).isNotNull();
+        assertThat(responseEntity.getBody().getData()).isNull();
+        assertThat(user.getLevel()).isEqualTo(11);
+        assertThat(user.getCoins()).isEqualTo(525);
 
         verify(userService, times(1)).getUserById(userId);
         verify(userService, times(1)).updateUser(any(User.class));
-        verify(tournamentService, times(1)).getActiveTournamentParticipation(userId, LocalDate.now(clock));
-        verify(tournamentService, times(1)).updateUserTournamentScore(userTournament, 1);
-
-        // Verify that the UserTournament score was updated
-        assertThat(userTournament.getScore()).isEqualTo(1);
+        verify(tournamentService, times(1)).getActiveTournamentParticipation(userId, LOCAL_DATE);
+        verify(tournamentService, times(0)).updateUserTournamentScore(any(UserTournament.class), anyInt());
     }
+
+    /**
+     * Test for incrementUserLevel when user not found.
+     * Verifies that a ResourceNotFoundException is thrown.
+     */
+    @Test
+    public void testIncrementUserLevelUserNotFound() {
+        Long userId = 1L;
+
+        when(userService.getUserById(userId)).thenReturn(null);
+
+        try {
+            userController.incrementUserLevel(userId);
+        } catch (ResourceNotFoundException e) {
+            assertThat(e.getMessage()).isEqualTo("User not found with id: " + userId);
+        }
+
+        verify(userService, times(1)).getUserById(userId);
+        verify(userService, times(0)).updateUser(any(User.class));
+        verify(tournamentService, times(0)).getActiveTournamentParticipation(userId, LOCAL_DATE);
+        verify(tournamentService, times(0)).updateUserTournamentScore(any(UserTournament.class), anyInt());
+    }
+
+    /**
+     * Test for incrementUserLevel when there is no attended tournament for the user.
+     * Verifies that the user's level is incremented by one and 25 coins are added.
+     * Ensures that the user's tournament score is not updated and no tournament data is returned.
+     */
+    @Test
+    public void testIncrementUserLevelNoAttendedTournament() {
+        Long userId = 1L;
+        User user = new User();
+        user.setId(userId);
+        user.setLevel(10);
+        user.setCoins(500);
+
+        when(userService.getUserById(userId)).thenReturn(user);
+        when(userService.updateUser(any(User.class))).thenReturn(user);
+        when(tournamentService.getActiveTournamentParticipation(userId, LOCAL_DATE)).thenReturn(null);
+
+        ResponseEntity<ApiResponse<UserTournament>> responseEntity = userController.incrementUserLevel(userId);
+
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(responseEntity.getBody().getMessage()).isEqualTo("User level incremented successfully");
+        assertThat(responseEntity.getBody().getData()).isNull();
+        assertThat(user.getLevel()).isEqualTo(11);
+        assertThat(user.getCoins()).isEqualTo(525);
+
+        verify(userService, times(1)).getUserById(userId);
+        verify(userService, times(1)).updateUser(any(User.class));
+        verify(tournamentService, times(1)).getActiveTournamentParticipation(userId, LOCAL_DATE);
+        verify(tournamentService, times(0)).updateUserTournamentScore(any(UserTournament.class), anyInt());
+    }
+
     /**
      * Test for successfully entering a tournament.
      * Verifies that the user is added to the tournament and the correct leaderboard is returned.
@@ -680,8 +671,6 @@ public class UserControllerTest {
         fixedClock = Clock.fixed(LOCAL_DATE.atTime(OUT_TOURNAMENT_TIME).atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
-
-
 
         try {
             userController.claimTournamentPrize(userId, tournamentId);

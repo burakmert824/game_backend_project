@@ -98,9 +98,10 @@ public class TournamentService {
     }
 
     @Transactional
-    public void updateUserTournamentScore(UserTournament userTournament, int additionalScore) {
+    public UserTournament updateUserTournamentScore(UserTournament userTournament, int additionalScore) {
         userTournament.setScore(userTournament.getScore() + additionalScore);
         userTournamentRepository.save(userTournament);
+        return userTournament;
     }
 
     public boolean hasUnclaimedTournaments(Long userId) {
