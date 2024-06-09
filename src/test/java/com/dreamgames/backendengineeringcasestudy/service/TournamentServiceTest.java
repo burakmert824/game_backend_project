@@ -1,6 +1,5 @@
 package com.dreamgames.backendengineeringcasestudy.service;
 
-import com.dreamgames.backendengineeringcasestudy.controller.exception.ResourceNotFoundException;
 import com.dreamgames.backendengineeringcasestudy.dto.CountryLeaderboardDTO;
 import com.dreamgames.backendengineeringcasestudy.dto.TournamentCompetitorScoreDTO;
 import com.dreamgames.backendengineeringcasestudy.entity.Tournament;
@@ -10,9 +9,7 @@ import com.dreamgames.backendengineeringcasestudy.repository.TournamentRepositor
 import com.dreamgames.backendengineeringcasestudy.repository.UserTournamentRepository;
 import com.dreamgames.backendengineeringcasestudy.repository.UserRepository;
 
-import java.util.Optional;
 import java.util.ArrayList;
-import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -27,8 +24,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
