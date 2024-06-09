@@ -196,7 +196,7 @@ public class UserControllerTest {
 
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(responseEntity.getBody().getMessage()).isEqualTo("User level incremented successfully");
-        assertThat(responseEntity.getBody().getData()).isNull();
+        assertThat(responseEntity.getBody().getData().getUser()).isEqualTo(user);
         assertThat(user.getLevel()).isEqualTo(11);
         assertThat(user.getCoins()).isEqualTo(525);
 
@@ -249,7 +249,7 @@ public class UserControllerTest {
 
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(responseEntity.getBody().getMessage()).isEqualTo("User level incremented successfully");
-        assertThat(responseEntity.getBody().getData()).isNull();
+        assertThat(responseEntity.getBody().getData().getUser()).isEqualTo(user);
         assertThat(user.getLevel()).isEqualTo(11);
         assertThat(user.getCoins()).isEqualTo(525);
 
@@ -487,43 +487,37 @@ public class UserControllerTest {
         user.setId(userId);
         user.setCoins(500);
         
-        Tournament tournament = new Tournament();
-        tournament.setId(tournamentId);
-        tournament.setDate(LOCAL_DATE.minusDays(1));
-        
-        UserTournament userTournament = new UserTournament(user, tournament, false, 0);
-        //       String[] countries = {"Turkey", "United States", "United Kingdom", "France", "Germany"};
-        List<TournamentCompetitorScoreDTO> competitors = Arrays.asList(
-            new TournamentCompetitorScoreDTO(1L, "testuser", "Turkey", 100),
-            new TournamentCompetitorScoreDTO(2L, "user2", "United States", 90),
-            new TournamentCompetitorScoreDTO(3L, "testuser1", "United Kingdom", 80),
-            new TournamentCompetitorScoreDTO(4L, "testuser2", "Germany", 80),
-            new TournamentCompetitorScoreDTO(5L, "testuser3", "France", 80)
-        );
-
-        when(userService.getUserById(userId)).thenReturn(user);
-        when(tournamentService.getUserTournament(userId, tournamentId)).thenReturn(userTournament);
-        when(tournamentService.getCompetitorsByTournamentId(tournamentId)).thenReturn(competitors);
-
-        doAnswer(invocation -> {
-            Map<String, Object> result = new HashMap<>();
-            result.put("user", user);
-            result.put("userTournament", userTournament);
-            return result;
-        }).when(tournamentService).claimTournamentPrize(userId, tournamentId, 10000);
-
-        ResponseEntity<ApiResponse<Map<String, Object>>> responseEntity = userController.claimTournamentPrize(userId, tournamentId);
-
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(responseEntity.getBody().getMessage()).isEqualTo("Tournament prize claimed successfully");
-        assertThat(responseEntity.getBody().getData().get("user")).isEqualTo(user);
-        assertThat(responseEntity.getBody().getData().get("userTournament")).isEqualTo(userTournament);
+    Tournament tournament = new Tournament();
+    tournament.setId(tournamentId);
+    tournament.setDate(LOCAL_DATE.minusDays(1));
     
-        verify(userService, times(1)).getUserById(userId);
-        verify(tournamentService, times(1)).getUserTournament(userId, tournamentId);
-        verify(tournamentService, times(1)).getCompetitorsByTournamentId(tournamentId);
-        verify(tournamentService, times(1)).claimTournamentPrize(userId, tournamentId, 10000);
-    }
+    UserTournament userTournament = new UserTournament(user, tournament, false, 0);
+
+    List<TournamentCompetitorScoreDTO> competitors = Arrays.asList(
+        new TournamentCompetitorScoreDTO(1L, "testuser", "Turkey", 100),
+        new TournamentCompetitorScoreDTO(2L, "user2", "United States", 90),
+        new TournamentCompetitorScoreDTO(3L, "testuser1", "United Kingdom", 80),
+        new TournamentCompetitorScoreDTO(4L, "testuser2", "Germany", 80),
+        new TournamentCompetitorScoreDTO(5L, "testuser3", "France", 80)
+    );
+
+    when(userService.getUserById(userId)).thenReturn(user);
+    when(tournamentService.getUserTournament(userId, tournamentId)).thenReturn(userTournament);
+    when(tournamentService.getCompetitorsByTournamentId(tournamentId)).thenReturn(competitors);
+
+    when(tournamentService.claimTournamentPrize(userId, tournamentId, 10000)).thenReturn(userTournament);
+
+    ResponseEntity<ApiResponse<UserTournament>> responseEntity = userController.claimTournamentPrize(userId, tournamentId);
+
+    assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(responseEntity.getBody().getMessage()).isEqualTo("Tournament prize claimed successfully");
+    assertThat(responseEntity.getBody().getData()).isEqualTo(userTournament);
+
+    verify(userService, times(1)).getUserById(userId);
+    verify(tournamentService, times(1)).getUserTournament(userId, tournamentId);
+    verify(tournamentService, times(1)).getCompetitorsByTournamentId(tournamentId);
+    verify(tournamentService, times(1)).claimTournamentPrize(userId, tournamentId, 10000);
+}
 
     /**
      * Test for claimTournamentPrize when the user is not part of the tournament.
@@ -533,20 +527,20 @@ public class UserControllerTest {
     public void testClaimTournamentPrize_UserNotPartOfTournament() {
         Long userId = 1L;
         Long tournamentId = 1L;
-
+    
         when(userService.getUserById(userId)).thenReturn(new User());
         when(tournamentService.getUserTournament(userId, tournamentId)).thenReturn(null);
-
+    
         try {
             userController.claimTournamentPrize(userId, tournamentId);
         } catch (ResourceNotFoundException e) {
             assertThat(e.getMessage()).isEqualTo("User is not part of this tournament.");
         }
-
+    
         verify(userService, times(1)).getUserById(userId);
         verify(tournamentService, times(1)).getUserTournament(userId, tournamentId);
     }
-
+    
     /**
      * Test for claimTournamentPrize when the prize is already claimed.
      * Verifies that a PrizeAlreadyClaimedException is thrown.
@@ -558,20 +552,20 @@ public class UserControllerTest {
         User user = new User();
         Tournament tournament = new Tournament();
         UserTournament userTournament = new UserTournament(user, tournament, true, 0);
-
+    
         when(userService.getUserById(userId)).thenReturn(user);
         when(tournamentService.getUserTournament(userId, tournamentId)).thenReturn(userTournament);
-
+    
         try {
             userController.claimTournamentPrize(userId, tournamentId);
         } catch (PrizeAlreadyClaimedException e) {
             assertThat(e.getMessage()).isEqualTo("Prize already claimed for this tournament.");
         }
-
+    
         verify(userService, times(1)).getUserById(userId);
         verify(tournamentService, times(1)).getUserTournament(userId, tournamentId);
     }
-
+    
     /**
      * Test for claimTournamentPrize when there are not enough competitors.
      * Verifies that a NotEnoughCompetitorsException is thrown.
@@ -583,27 +577,27 @@ public class UserControllerTest {
         User user = new User();
         Tournament tournament = new Tournament();
         UserTournament userTournament = new UserTournament(user, tournament, false, 0);
-
+    
         List<TournamentCompetitorScoreDTO> competitors = Arrays.asList(
             new TournamentCompetitorScoreDTO(1L, "user1", "Turkey", 100),
             new TournamentCompetitorScoreDTO(2L, "user2", "USA", 90)
         );
-
+    
         when(userService.getUserById(userId)).thenReturn(user);
         when(tournamentService.getUserTournament(userId, tournamentId)).thenReturn(userTournament);
         when(tournamentService.getCompetitorsByTournamentId(tournamentId)).thenReturn(competitors);
-
+    
         try {
             userController.claimTournamentPrize(userId, tournamentId);
         } catch (NotEnoughCompetitorsException e) {
             assertThat(e.getMessage()).isEqualTo("Not enough competitors in the tournament.");
         }
-
+    
         verify(userService, times(1)).getUserById(userId);
         verify(tournamentService, times(1)).getUserTournament(userId, tournamentId);
         verify(tournamentService, times(1)).getCompetitorsByTournamentId(tournamentId);
     }
-
+    
     /**
      * Test for claimTournamentPrize when the tournament has not ended.
      * Verifies that a TournamentNotEndedException is thrown.
@@ -616,7 +610,7 @@ public class UserControllerTest {
         Tournament tournament = new Tournament();
         tournament.setDate(LOCAL_DATE);
         UserTournament userTournament = new UserTournament(user, tournament, false, 0);
-
+    
         List<TournamentCompetitorScoreDTO> competitors = Arrays.asList(
             new TournamentCompetitorScoreDTO(userId, "testuser", "Turkey", 100),
             new TournamentCompetitorScoreDTO(2L, "user2", "United States", 90),
@@ -624,26 +618,26 @@ public class UserControllerTest {
             new TournamentCompetitorScoreDTO(4L, "testuser2", "Germany", 80),
             new TournamentCompetitorScoreDTO(5L, "testuser3", "France", 80)
         );
-
+    
         when(userService.getUserById(userId)).thenReturn(user);
         when(tournamentService.getUserTournament(userId, tournamentId)).thenReturn(userTournament);
         when(tournamentService.getCompetitorsByTournamentId(tournamentId)).thenReturn(competitors);
-
+    
         fixedClock = Clock.fixed(LOCAL_DATE.atTime(IN_TOURNAMENT_TIME).atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
-
+    
         try {
             userController.claimTournamentPrize(userId, tournamentId);
         } catch (TournamentNotEndedException e) {
             assertThat(e.getMessage()).isEqualTo("Tournament has not ended yet.");
         }
-
+    
         verify(userService, times(1)).getUserById(userId);
         verify(tournamentService, times(1)).getUserTournament(userId, tournamentId);
         verify(tournamentService, times(1)).getCompetitorsByTournamentId(tournamentId);
     }
-
+    
     /**
      * Test for claimTournamentPrize when the user rank is not found.
      * Verifies that a ResourceNotFoundException is thrown.
@@ -656,19 +650,22 @@ public class UserControllerTest {
         Tournament tournament = new Tournament();
         tournament.setDate(LOCAL_DATE);
         UserTournament userTournament = new UserTournament(user, tournament, false, 0);
-
+    
         List<TournamentCompetitorScoreDTO> competitors = Arrays.asList(
-            new TournamentCompetitorScoreDTO(6L, "testuser", "Turkey", 100),
             new TournamentCompetitorScoreDTO(2L, "user2", "United States", 90),
             new TournamentCompetitorScoreDTO(3L, "testuser1", "United Kingdom", 80),
             new TournamentCompetitorScoreDTO(4L, "testuser2", "Germany", 80),
-            new TournamentCompetitorScoreDTO(5L, "testuser3", "France", 80)
+            new TournamentCompetitorScoreDTO(5L, "testuser3", "France", 80),
+            new TournamentCompetitorScoreDTO(6L, "testuser3", "Turkey", 80)
+
         );
+    
         when(userService.getUserById(userId)).thenReturn(user);
         when(tournamentService.getUserTournament(userId, tournamentId)).thenReturn(userTournament);
         when(tournamentService.getCompetitorsByTournamentId(tournamentId)).thenReturn(competitors);
-
-        fixedClock = Clock.fixed(LOCAL_DATE.atTime(OUT_TOURNAMENT_TIME).atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
+        fixedClock = Clock.fixed(
+            LOCAL_DATE.atTime(OUT_TOURNAMENT_TIME).atZone(ZoneId.systemDefault()).toInstant(),
+            ZoneId.systemDefault());
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
 
@@ -677,10 +674,10 @@ public class UserControllerTest {
         } catch (ResourceNotFoundException e) {
             assertThat(e.getMessage()).isEqualTo("User rank not found in the tournament.");
         }
-
+    
         verify(userService, times(1)).getUserById(userId);
         verify(tournamentService, times(1)).getUserTournament(userId, tournamentId);
         verify(tournamentService, times(1)).getCompetitorsByTournamentId(tournamentId);
     }
-
+    
 }
