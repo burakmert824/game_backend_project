@@ -22,14 +22,10 @@ import org.springframework.web.bind.annotation.*;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.UserAlreadyExistsException;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.UserNotEligibleException;
 import com.dreamgames.backendengineeringcasestudy.controller.exception.UnclaimedTournamentException;
-import java.util.Map;
-
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneOffset;
 import java.util.Random;
-import java.util.HashMap;
 import java.util.List;
 
 @RestController
