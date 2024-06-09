@@ -257,23 +257,36 @@ public ResponseEntity<ApiResponse<Map<String, Object>>> incrementUserLevel(@Path
      * Endpoint: POST /users/{userId}/tournaments/{tournamentId}/claim-prize
      * 
      * Actions:
+     * - Retrieves the user by ID.
+     * - Checks if the user is part of the tournament.
+     * - Checks if the prize has already been claimed.
      * - Checks if the tournament has at least 5 competitors.
-     * - Checks the user's rank in the tournament.
-     * - If the rank is 1st or 2nd, adds the prize to the user's coins.
-     * - Marks the tournament as claimed.
+     * - Checks if the tournament has ended (based on the date and time).
+     * - Determines the user's rank in the tournament.
+     * - If the user's rank is 1st or 2nd, adds the prize to the user's coins.
+     * - Marks the prize as claimed for the tournament.
      * 
      * Responses:
-     * - 200 OK: Tournament prize claimed successfully.
+     * - 200 OK: Tournament prize claimed successfully. Returns the updated user and userTournament.
      * - 404 Not Found: User or tournament not found.
      * - 400 Bad Request: Not enough competitors, prize already claimed, or tournament not ended.
+     * 
+     * Exceptions:
+     * - ResourceNotFoundException: If the user or tournament is not found, or if the user's rank is not found.
+     * - PrizeAlreadyClaimedException: If the prize has already been claimed for this tournament.
+     * - NotEnoughCompetitorsException: If there are not enough competitors in the tournament.
+     * - TournamentNotEndedException: If the tournament has not ended yet.
      * 
      * @param userId The ID of the user claiming the prize.
      * @param tournamentId The ID of the tournament.
      * @return ResponseEntity with the ApiResponse containing the result or an error message.
-     * @throws ResourceNotFoundException if the user or tournament is not found.
+     * @throws ResourceNotFoundException if the user or tournament is not found, or if the user's rank is not found.
+     * @throws PrizeAlreadyClaimedException if the prize has already been claimed for this tournament.
+     * @throws NotEnoughCompetitorsException if there are not enough competitors in the tournament.
+     * @throws TournamentNotEndedException if the tournament has not ended yet.
      */
     @PostMapping("/{userId}/tournaments/{tournamentId}/claim-prize")
-    public ResponseEntity<ApiResponse<String>> claimTournamentPrize(@PathVariable Long userId, @PathVariable Long tournamentId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> claimTournamentPrize(@PathVariable Long userId, @PathVariable Long tournamentId) {
         User user = userService.getUserById(userId);
         if (user == null) {
             throw new ResourceNotFoundException("User not found with id: " + userId);
@@ -319,9 +332,10 @@ public ResponseEntity<ApiResponse<Map<String, Object>>> incrementUserLevel(@Path
             prize = 5000;
         }
 
-        tournamentService.claimTournamentPrize(userId, tournamentId, prize);
+        Map<String, Object> result = tournamentService.claimTournamentPrize(userId, tournamentId, prize);
 
-        ApiResponse<String> response = new ApiResponse<>("Tournament prize claimed successfully", null);
+        ApiResponse<Map<String, Object>> response = new ApiResponse<>("Tournament prize claimed successfully", result);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
 }
