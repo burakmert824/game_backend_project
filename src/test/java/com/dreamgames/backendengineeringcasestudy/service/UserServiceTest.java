@@ -27,6 +27,10 @@ public class UserServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
+    /**
+     * Test for creating a user.
+     * Verifies that the user is created and returned correctly.
+     */
     @Test
     public void testCreateUser() {
         User user = new User();
@@ -48,6 +52,10 @@ public class UserServiceTest {
         verify(userRepository, times(1)).save(user);
     }
 
+    /**
+     * Test for retrieving a user by ID.
+     * Verifies that the user is found and returned correctly.
+     */
     @Test
     public void testGetUserById() {
         User user = new User();
@@ -65,6 +73,10 @@ public class UserServiceTest {
         verify(userRepository, times(1)).findById(1L);
     }
 
+    /**
+     * Test for checking if a username exists.
+     * Verifies that the correct boolean value is returned.
+     */
     @Test
     public void testExistsByUsername() {
         when(userRepository.existsByUsername("testuser")).thenReturn(true);
@@ -76,6 +88,10 @@ public class UserServiceTest {
         verify(userRepository, times(1)).existsByUsername("testuser");
     }
 
+    /**
+     * Test for updating a user.
+     * Verifies that the user is updated and returned correctly.
+     */
     @Test
     public void testUpdateUser() {
         User user = new User();
