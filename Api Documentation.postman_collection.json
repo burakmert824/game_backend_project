@@ -25,7 +25,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/users?username=Enes",
+							"raw": "http://localhost:8080/users?username={username}",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -37,7 +37,7 @@
 							"query": [
 								{
 									"key": "username",
-									"value": "Enes"
+									"value": "{username}"
 								}
 							]
 						},
@@ -111,12 +111,12 @@
 					"request": {
 						"method": "PATCH",
 						"header": [],
-						"url": "http://localhost:8080/users/{id}/increment-level",
-						"description": "Increment user's level by one and add 25 coins.  \n  \nEndpoint: PATCH /api/users/{id}/increment-level  \n  \nActions:\n\n- Retrieves the user by ID.\n    \n- Increases the user's level by one.\n    \n- Adds 25 coins to the user's current coins.\n    \n- Checks if the user is participating in any tournaments today that have started.\n    \n- If participating, checks if the current time is within tournament hours (00:00 to 20:00 UTC).\n    \n- If within hours, updates the tournament score by adding a specified amount.\n    \n- Saves the updated user and user-tournament.\n    \n\n- Responses:\n    \n    - 200 OK: User level incremented successfully.\n        \n    - 404 Not Found: User not found.\n        \n    - 400 Bad Request: Tournament not within hours.\n        \n    - 500 Internal Server Error: Other errors.\n        \n- Example:  \n    curl -X PATCH \"[http://localhost:8080/api/users/1/increment-level\"](http://localhost:8080/api/users/1/increment-level\")\n    \n- @param id The ID of the user whose level is to be incremented.\n    \n- @return ResponseEntity with the ApiResponse containing the updated user or an error message.\n    \n- @throws ResourceNotFoundException if the user is not found."
+						"url": "http://localhost:8080/users/{user_id}/increment-level",
+						"description": "Increment user's level by one and add 25 coins.\n\n- Endpoint: PATCH /api/users/{id}/increment-level\n    \n- Actions:\n    \n    - Retrieves the user by ID.\n        \n    - Increases the user's level by one.\n        \n    - Adds 25 coins to the user's current coins.\n        \n    - Checks if the user is participating in any tournaments today that have started.\n        \n    - If participating, checks if the current time is within tournament hours (00:00 to 20:00 UTC).\n        \n    - If within hours, updates the tournament score by adding a specified amount.\n        \n    - Saves the updated user-tournament.\n        \n- Responses:\n    \n    - 200 OK: User level incremented successfully.\n        \n    - 404 Not Found: User not found.\n        \n    - 400 Bad Request: Tournament not within hours.\n        \n    - 500 Internal Server Error: Other errors.\n        \n- Example:  \n    curl -X PATCH \"[http://localhost:8080/api/users/1/increment-level\"](http://localhost:8080/api/users/1/increment-level\")\n    \n- @param id The ID of the user whose level is to be incremented.\n    \n- @return ResponseEntity with the ApiResponse containing the updated user tournament or an error message.\n    \n- @throws ResourceNotFoundException if the user is not found."
 					},
 					"response": [
 						{
-							"name": "New Request",
+							"name": "updateWithoutTournament",
 							"originalRequest": {
 								"method": "PATCH",
 								"header": [],
@@ -136,7 +136,7 @@
 								},
 								{
 									"key": "Date",
-									"value": "Thu, 06 Jun 2024 18:24:15 GMT"
+									"value": "Sun, 09 Jun 2024 13:19:47 GMT"
 								},
 								{
 									"key": "Keep-Alive",
@@ -148,7 +148,42 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"message\": \"User level incremented successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"username\": \"Burak\",\n        \"level\": 2,\n        \"coins\": 5025,\n        \"country\": \"Turkey\"\n    }\n}"
+							"body": "{\n    \"message\": \"User level incremented successfully\",\n    \"data\": {\n        \"id\": {\n            \"userId\": null,\n            \"tournamentId\": null\n        },\n        \"user\": {\n            \"id\": 1,\n            \"username\": \"user1\",\n            \"level\": 22,\n            \"coins\": 15050,\n            \"country\": \"Turkey\"\n        },\n        \"tournament\": null,\n        \"score\": 0,\n        \"claimed\": false\n    }\n}"
+						},
+						{
+							"name": "UpdateWithTournament",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [],
+								"url": "http://localhost:8080/users/6/increment-level"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sun, 09 Jun 2024 13:20:08 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"User level incremented successfully\",\n    \"data\": {\n        \"id\": {\n            \"userId\": 6,\n            \"tournamentId\": 2\n        },\n        \"user\": {\n            \"id\": 6,\n            \"username\": \"user6\",\n            \"level\": 121,\n            \"coins\": 5025,\n            \"country\": \"Turkey\"\n        },\n        \"tournament\": {\n            \"id\": 2,\n            \"isStarted\": true,\n            \"date\": \"2024-06-09\"\n        },\n        \"score\": 11,\n        \"claimed\": false\n    }\n}"
 						}
 					]
 				},
@@ -157,19 +192,92 @@
 					"request": {
 						"method": "POST",
 						"header": [],
-						"url": "http://localhost:8080/users/2/enter-tournament",
-						"description": "Enter a user into the current tournament.\n\nEndpoint: POST /users/{id}/enter-tournament\n\nActions:\n\n- Retrieves the user by ID.\n- Checks if the user has at least 1000 coins and is at level 20 or higher.\n- Checks if the user has any unclaimed tournaments.\n- Checks if the current time is between 00:00 and 20:00 UTC.\n- Checks if the user is already participating in a tournament on the current date.\n- Finds an eligible tournament:\n    - No competitors from the user's country.\n    - Less than 5 competitors.\n- If no eligible tournament is found, creates a new tournament.\n- Deducts 1000 coins from the user.\n- Adds the user to the tournament.\n- If the user is the 5th competitor, sets the tournament's isStarted field to true.\n- Returns the current tournament leaderboard.\n    \n\n- Responses:\n    \n    - 200 OK: User entered the tournament successfully.\n        \n    - 404 Not Found: User not found or no eligible tournament found.\n        \n    - 400 Bad Request: User not eligible to enter the tournament.\n        \n    - 400 Bad Request: User does not have enough coins.\n        \n        - 400 Bad Request: No tournament available at this hour.\n            \n    - 400 Bad Request: User already participating in a tournament on this date.\n        \n    - 400 Bad Request: User has unclaimed tournaments.\n        \n- Example:  \n    curl -X POST \"[http://localhost:8080/users/1/enter-tournament\"](http://localhost:8080/users/1/enter-tournament)\n    \n- @param id The ID of the user who wants to enter the tournament.\n    \n- @return ResponseEntity with the ApiResponse containing the leaderboard or an error message.\n    \n- @throws ResourceNotFoundException if the user or tournament is not found.\n    \n- @throws UserNotEligibleException if the user does not have enough levels to enter the tournament.\n    \n- @throws InsufficientCoinsException if the user does not have enough coins to enter the tournament.\n    \n- @throws NoTournamentAtThisHourException if the current time is not between 00:00 and 20:00 UTC.\n    \n- @throws AlreadyInTournamentException if the user is already participating in a tournament on the current date.\n    \n- @throws UnclaimedTournamentException if the user has unclaimed tournaments."
+						"url": "http://localhost:8080/users/{user_id}/enter-tournament",
+						"description": "Enter a user into the current tournament.  \n\\*  \nEndpoint: POST /users/{id}/enter-tournament  \n\\*  \nActions:\n\n- Retrieves the user by ID.\n    \n- Checks if the user has at least 1000 coins and is at level 20 or higher.\n    \n- Checks if the user has any unclaimed tournaments.\n    \n- Checks if the current time is between 00:00 and 20:00 UTC.\n    \n- Checks if the user is already participating in a tournament on the current date.\n    \n- Finds an eligible tournament:\n    \n    - No competitors from the user's country.\n        \n    - Less than 5 competitors.\n        \n- If no eligible tournament is found, creates a new tournament.\n    \n- Deducts 1000 coins from the user.\n    \n- Adds the user to the tournament.\n    \n- If the user is the 5th competitor, sets the tournament's isStarted field to true.\n    \n- Returns the current tournament leaderboard.\n    \n- Responses:\n    \n    - 200 OK: User entered the tournament successfully.\n        \n    - 404 Not Found: User not found or no eligible tournament found.\n        \n    - 400 Bad Request: User not eligible to enter the tournament.\n        \n    - 400 Bad Request: User does not have enough coins.\n        \n    - 400 Bad Request: No tournament available at this hour.\n        \n    - 400 Bad Request: User already participating in a tournament on this date.\n        \n    - 400 Bad Request: User has unclaimed tournaments.\n        \n\n- Example:  \n    curl -X POST \"[http://localhost:8080/users/1/enter-tournament\"](http://localhost:8080/users/1/enter-tournament\")\n    \n\n- @param id The ID of the user who wants to enter the tournament.\n    \n- @return ResponseEntity with the ApiResponse containing the leaderboard or an error message.\n    \n- @throws ResourceNotFoundException if the user or tournament is not found.\n    \n- @throws UserNotEligibleException if the user does not have enough levels to enter the tournament.\n    \n- @throws InsufficientCoinsException if the user does not have enough coins to enter the tournament.\n    \n- @throws NoTournamentAtThisHourException if the current time is not between 00:00 and 20:00 UTC.\n    \n- @throws AlreadyInTournamentException if the user is already participating in a tournament on the current date.\n    \n- @throws UnclaimedTournamentException if the user has unclaimed tournaments."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "enteredSuccesfullyandCreateTournament",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": "http://localhost:8080/users/11/enter-tournament"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sun, 09 Jun 2024 12:34:17 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"User entered the tournament successfully\",\n    \"data\": [\n        {\n            \"userId\": 11,\n            \"username\": \"Burak\",\n            \"country\": \"Turkey\",\n            \"score\": 0\n        }\n    ]\n}"
+						}
+					]
 				},
 				{
 					"name": "ClaimRewardRequest",
 					"request": {
-						"method": "GET",
+						"method": "POST",
 						"header": [],
-						"url": "http://localhost:8080/users/{userId}/tournaments/{tournamentId}/claim-prize"
+						"url": "http://localhost:8080/users/{user_id}/tournaments/{tournament_id}/claim-prize",
+						"description": "Claim tournament prize.  \n  \nEndpoint: POST /users/{userId}/tournaments/{tournamentId}/claim-prize  \n  \nActions:\n\n- Retrieves the user by ID.\n    \n- Checks if the user is part of the tournament.\n    \n- Checks if the prize has already been claimed.\n    \n- Checks if the tournament has at least 5 competitors.\n    \n- Checks if the tournament has ended (based on the date and time).\n    \n- Determines the user's rank in the tournament.\n    \n- If the user's rank is 1st or 2nd, adds the prize to the user's coins.\n    \n- Marks the prize as claimed for the tournament.\n    \n    - Responses:\n        \n- 200 OK: Tournament prize claimed successfully. Returns the updated userTournament.\n    \n- 404 Not Found: User or tournament not found.\n    \n- 400 Bad Request: Not enough competitors, prize already claimed, or tournament not ended.\n    \n\n- Exceptions:\n    \n    - ResourceNotFoundException: If the user or tournament is not found, or if the user's rank is not found.\n        \n    - PrizeAlreadyClaimedException: If the prize has already been claimed for this tournament.\n        \n    - NotEnoughCompetitorsException: If there are not enough competitors in the tournament.\n        \n    - TournamentNotEndedException: If the tournament has not ended yet.\n        \n- @param userId The ID of the user claiming the prize.\n    \n- @param tournamentId The ID of the tournament.\n    \n- @return ResponseEntity with the ApiResponse containing the result or an error message.\n    \n- @throws ResourceNotFoundException if the user or tournament is not found, or if the user's rank is not found.\n    \n- @throws PrizeAlreadyClaimedException if the prize has already been claimed for this tournament.\n    \n- @throws NotEnoughCompetitorsException if there are not enough competitors in the tournament.\n    \n- @throws TournamentNotEndedException if the tournament has not ended yet."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "prizeclaimed",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": "http://localhost:8080/users/1/tournaments/1/claim-prize"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sun, 09 Jun 2024 12:51:57 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Tournament prize claimed successfully\",\n    \"data\": {\n        \"user\": {\n            \"id\": 1,\n            \"username\": \"user1\",\n            \"level\": 21,\n            \"coins\": 15025,\n            \"country\": \"Turkey\"\n        },\n        \"userTournament\": {\n            \"id\": {\n                \"userId\": 1,\n                \"tournamentId\": 1\n            },\n            \"user\": {\n                \"id\": 1,\n                \"username\": \"user1\",\n                \"level\": 21,\n                \"coins\": 15025,\n                \"country\": \"Turkey\"\n            },\n            \"tournament\": {\n                \"id\": 1,\n                \"isStarted\": false,\n                \"date\": \"2024-06-08\"\n            },\n            \"score\": 5,\n            \"claimed\": true\n        }\n    }\n}"
+						}
+					]
 				}
 			]
 		},
@@ -181,9 +289,45 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"description": "Retrieve the leaderboard for a specific tournament.\n\nEndpoint: GET /tournaments/{tournamentId}/leadboard\n\nThis endpoint retrieves the leaderboard for a given tournament. The leaderboard  \ncontains a list of competitors along with their scores, sorted from highest to lowest.\n\nActions:\n\n- Retrieves the tournament leaderboard based on the given tournament ID.\n- Constructs an ApiResponse object with a success message and the leaderboard data.\n    \n\n- Responses:\n- 200 OK: Returns the tournament leaderboard successfully.\n- 404 Not Found: If the tournament is not found.\n- 500 Internal Server Error: If an error occurs while retrieving the leaderboard.\n    \n\n- Example:  \n    curl -X GET \"[http://localhost:8080/tournaments/1/leadboard\"](http://localhost:8080/tournaments/1/leadboard)\n- @param tournamentId The ID of the tournament whose leaderboard is to be retrieved.\n- @return ResponseEntity containing the ApiResponse with the leaderboard data or an error message.\n- @throws ResourceNotFoundException if the tournament is not found."
+						"description": "Retrieve the leaderboard for a specific tournament.  \n  \nEndpoint: GET /tournaments/{tournamentId}/leadboard  \n  \nThis endpoint retrieves the leaderboard for a given tournament. The leaderboard  \ncontains a list of competitors along with their scores, sorted from highest to lowest.  \n  \nActions:\n\n- Retrieves the tournament leaderboard based on the given tournament ID.\n    \n- Constructs an ApiResponse object with a success message and the leaderboard data.\n    \n- Responses:\n    \n    - 200 OK: Returns the tournament leaderboard successfully.\n        \n    - 404 Not Found: If the tournament is not found.\n        \n    - 500 Internal Server Error: If an error occurs while retrieving the leaderboard.\n        \n- Example:  \n    curl -X GET \"[http://localhost:8080/tournaments/1/leadboard\"](http://localhost:8080/tournaments/1/leadboard\")\n    \n- @param tournamentId The ID of the tournament whose leaderboard is to be retrieved.\n    \n- @return ResponseEntity containing the ApiResponse with the leaderboard data or an error message.\n    \n- @throws ResourceNotFoundException if the tournament is not found."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "success_getting_leaderboard",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": "http://localhost:8080/tournaments/1/leadboard"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sun, 09 Jun 2024 13:18:57 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Leadboard retrieved successfully\",\n    \"data\": [\n        {\n            \"userId\": 1,\n            \"username\": \"user1\",\n            \"country\": \"Turkey\",\n            \"score\": 5\n        },\n        {\n            \"userId\": 2,\n            \"username\": \"user2\",\n            \"country\": \"United States\",\n            \"score\": 4\n        },\n        {\n            \"userId\": 3,\n            \"username\": \"user3\",\n            \"country\": \"United Kingdom\",\n            \"score\": 3\n        },\n        {\n            \"userId\": 4,\n            \"username\": \"user4\",\n            \"country\": \"France\",\n            \"score\": 2\n        },\n        {\n            \"userId\": 5,\n            \"username\": \"user5\",\n            \"country\": \"Germany\",\n            \"score\": 1\n        }\n    ]\n}"
+						}
+					]
 				},
 				{
 					"name": "GetCountryLeaderboardRequest",
@@ -191,7 +335,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/tournaments/country-leaderboard?date={date}",
+							"raw": "http://localhost:8080/tournaments/country-leaderboard?date=2024-06-08",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -204,23 +348,112 @@
 							"query": [
 								{
 									"key": "date",
-									"value": "{date}"
+									"value": "2024-06-08"
 								}
 							]
 						},
-						"description": "Get country leaderboard for all tournaments on a given date.  \n\\*  \nEndpoint: GET /tournaments/country-leaderboard?date=YYYY-MM-DD  \n\\*  \nActions:\n\n- Retrieves the total scores contributed by each user competing for their respective country.\n    \n- Aggregates the scores by country and sorts from highest to lowest.\n    \n\n- Responses:\n    \n    - 200 OK: Returns the country leaderboard.\n        \n    - 404 Not Found: No tournaments found on the given date.\n        \n    - 500 Internal Server Error: Other errors.\n        \n\n- @param date The date of the tournaments.\n    \n- @return ResponseEntity with the ApiResponse containing the leaderboard data or an error message."
+						"description": "Get country leaderboard for all tournaments on a given date.  \n\\*  \nEndpoint: GET /tournaments/country-leaderboard?date=YYYY-MM-DD  \n\\*  \nActions:\n\n- Retrieves the total scores contributed by each user competing for their respective country.\n    \n- Aggregates the scores by country and sorts from highest to lowest.\n    \n\n- Responses:\n    \n    - 200 OK: Returns the country leaderboard.\n        \n    - 404 Not Found: No tournaments found on the given date.\n        \n    - 500 Internal Server Error: Other errors.\n        \n\n- Example:  \n    curl -X GET \"[http://localhost:8080/tournaments/country-leaderboard?date=2023-06-01\"](http://localhost:8080/tournaments/country-leaderboard?date=2023-06-01\")\n    \n- @param date The date of the tournaments.\n    \n- @return ResponseEntity with the ApiResponse containing the leaderboard data or an error message."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Success_getting_country_board",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/tournaments/country-leaderboard?date=2024-06-09",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"tournaments",
+										"country-leaderboard"
+									],
+									"query": [
+										{
+											"key": "date",
+											"value": "2024-06-09"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sun, 09 Jun 2024 13:19:21 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Country leaderboard retrieved successfully\",\n    \"data\": [\n        {\n            \"country\": \"Turkey\",\n            \"totalScore\": 15\n        },\n        {\n            \"country\": \"United States\",\n            \"totalScore\": 15\n        },\n        {\n            \"country\": \"United Kingdom\",\n            \"totalScore\": 15\n        },\n        {\n            \"country\": \"France\",\n            \"totalScore\": 15\n        },\n        {\n            \"country\": \"Germany\",\n            \"totalScore\": 15\n        }\n    ]\n}"
+						}
+					]
 				},
 				{
 					"name": "GetGroupRankRequest",
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": "http://localhost:8080//tournaments/{tournamentId}/user/{userId}/rank",
-						"description": "Retrieve the user's ranking in a specific tournament.  \n  \nEndpoint: GET /tournaments/{tournamentId}/user/{userId}/rank  \n  \nThis endpoint retrieves the ranking of a user in a given tournament.  \n  \nActions:\n\n- Retrieves the tournament leaderboard based on the given tournament ID.\n    \n- Finds the user's position in the leaderboard.\n    \n- Constructs an ApiResponse object with a success message and the user's rank.\n    \n\n- Responses:\n    \n    - 200 OK: Returns the user's rank in the tournament successfully.\n        \n    - 404 Not Found: If the user or tournament is not found.\n        \n    - 500 Internal Server Error: If an error occurs while retrieving the rank.\n        \n\n- Example:  \n    curl -X GET \"[http://localhost:8080/tournaments/1/user/1/rank\"](http://localhost:8080/tournaments/1/user/1/rank\")\n    \n- @param tournamentId The ID of the tournament\n    \n- @param userId The ID of the user.\n    \n- @return ResponseEntity containing the ApiResponse with the user's rank or an error message.\n    \n- @throws ResourceNotFoundException if the user or tournament is not found."
+						"url": "http://localhost:8080/tournaments/{tournament_id}/user/{user_id}/rank",
+						"description": "Retrieve the user's ranking in a specific tournament.  \n  \nEndpoint: GET /tournaments/{tournamentId}/user/{userId}/rank  \n  \nThis endpoint retrieves the ranking of a user in a given tournament.  \n  \nActions:\n\n- Retrieves the tournament leaderboard based on the given tournament ID.\n    \n- Finds the user's position in the leaderboard.\n    \n- Constructs an ApiResponse object with a success message and the user's rank.\n    \n- Responses:\n    \n    - 200 OK: Returns the user's rank in the tournament successfully.\n        \n    - 404 Not Found: If the user or tournament is not found.\n        \n        - 500 Internal Server Error: If an error occurs while retrieving the rank.\n            \n- Example:  \n    curl -X GET \"[http://localhost:8080/tournaments/1/user/1/rank\"](http://localhost:8080/tournaments/1/user/1/rank\")\n    \n- @param tournamentId The ID of the tournament.\n    \n- @param userId The ID of the user.\n    \n- @return ResponseEntity containing the ApiResponse with the user's rank or an error message.\n    \n- @throws ResourceNotFoundException if the user or tournament is not found."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "get_rank_succesfully",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": "http://localhost:8080/tournaments/1/user/2/rank"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sun, 09 Jun 2024 13:24:24 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"User ranking retrieved successfully\",\n    \"data\": 2\n}"
+						}
+					]
 				}
 			]
 		}
